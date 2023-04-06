@@ -85,6 +85,9 @@ def main():
     elif command == "config":
         subprocess.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}", shell=True)
 
+    elif command == "open":
+        subprocess.run(f"{tdb.config.get('editor')} {db_path}", shell=True)
+
     elif command == "template":
         template = ""
         if sys.stdin.isatty():
