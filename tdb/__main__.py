@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import tempfile
+import subprocess
 import tdb.tags
 import tdb.records
 import tdb.config
@@ -27,10 +28,11 @@ def main():
         if not text:
             temp = tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False)
             temp.close()
- 
-            os.system(f"{tdb.config.get('editor')} {temp.name}")
-            text = open(temp.name).read()
-            os.remove(temp.name)
+            subprocess.run(f"{tdb.config.get('editor')} {temp.name}", shell=True)
+            
+            if os.path.exists(temp.name):
+                text = open(temp.name).read()
+                os.remove(temp.name)
 
         if text:
             tdb.records.add_record(db_path, text)

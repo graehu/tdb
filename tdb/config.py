@@ -1,12 +1,17 @@
 import tomllib
+import shutil
 import os
 
-_editor = "notepad"
-if os.name == "nt": _editor = "notepad"
-else: editor = os.environ.get("EDITOR", "nano")
+_editors = ["notepad", "gedit -w", "code -w", "emacs -a \"\" -c", "subl -w"]
+for editor in _editors:
+    editor = editor.split()[0]
+    if shutil.which(editor):
+        _editor = editor
+        break
 
 _default = f"""\
-editor = "{_editor}" # command for editor\
+# options: {_editors}
+editor = "{_editor}" # command for editor
 """
 _filename = os.path.expanduser("~/.tdb/config.toml")
 
