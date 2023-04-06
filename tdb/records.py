@@ -1,4 +1,5 @@
 import re
+import os
 from datetime import datetime
 import json
 
@@ -16,11 +17,13 @@ def add_record(db_file, string):
 
 def print_records(db_file):
     results = []
-    with open(db_file) as fd:
-        results = split_records(fd.read())
+    if os.path.exists(db_file):
+        with open(db_file) as fd:
+            results = split_records(fd.read())
 
-    results = [{"date": k.isoformat(" "),  "text": v} for k, v in results.items()]
-    print(json.dumps(results, indent=2))
+        results = [{"date": k.isoformat(" "),  "text": v} for k, v in results.items()]
+        print(json.dumps(results, indent=2))
+    else: print([])
 
 
 def split_records(text: str):
