@@ -23,4 +23,5 @@ if not os.path.exists(_filename):
 _config = None
 _config = tomllib.load(open(_filename, "rb"))
 
+def get_filename(): return _filename
 def get(key): return _config.get(key)

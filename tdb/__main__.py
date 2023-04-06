@@ -40,7 +40,6 @@ def main():
             print("No text provided. Record not added.")
 
     elif command == "display":
-        # Display all records in the database.
         tdb.records.print_records(db_path)
 
     elif command == "tags":
@@ -82,6 +81,36 @@ def main():
 
             results = sorted(results, key=lambda result: result["score"], reverse=True)
             print(json.dumps(results, indent=2))
+
+    elif command == "config":
+        subprocess.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}", shell=True)
+
+    elif command == "template":
+        template = ""
+        if sys.stdin.isatty():
+            template = " ".join(sys.argv[2:]).strip()
+        else:
+            template = sys.stdin.read().strip()
+        if os.path.exists(template):
+            temp = tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False)
+            temp_text = open(template).read() 
+            temp.write(temp_text)
+            temp.close()
+            subprocess.run(f"{tdb.config.get('editor')} {temp.name}", shell=True)
+            
+            if os.path.exists(temp.name):
+                text = open(temp.name).read()
+                os.remove(temp.name)
+                if tdb.rake.similarity_score(temp_text, text) == 1.0:
+                    print("no changes made")
+                    return
+
+                if text:
+                    tdb.records.add_record(db_path, text)
+                else:
+                    print("No text provided. Record not added.")
+        else:
+            print(f"'{template}' is not a valid file")
 
     else:
         print("Invalid command. Try again.")
