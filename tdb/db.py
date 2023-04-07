@@ -32,7 +32,10 @@ def get_text(): return _db_edits
 
 def append(text):
     global _db_edits
-    _db_edits += text
+    if _db_edits[-1] != "\n":
+        _db_edits += "\n"+text
+    else:
+        _db_edits += text
 
 
 def insert(text, pos):
