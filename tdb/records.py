@@ -1,29 +1,33 @@
 import re
-import os
 from datetime import datetime
 import json
+import tdb.db
 
 # This is the format: "2023-04-05T09:59:33"
 re_record = re.compile(r'^(\[(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] )', re.MULTILINE | re.IGNORECASE)
 
-def add_record(db_file, string):
+
+def make_record(text):
     now = datetime.now()
     now = now.isoformat(" ", "seconds")
-    with open(db_file, "a") as f:
-        f.write(f"[{now}] {string}\n")
+    return f"[{now}] {text}\n"
 
+
+def add_record(text):
+    record = make_record(text)
+    tdb.db.append(record)
     print("Record added successfully!")
 
 
-def print_records(db_file):
+def print_records():
     results = []
-    if os.path.exists(db_file):
-        with open(db_file) as fd:
-            results = split_records(fd.read())
+    results = split_db_records()
+    results = [{"date": k.isoformat(" "),  "text": v} for k, v in results.items()]
+    print(json.dumps(results, indent=2))
 
-        results = [{"date": k.isoformat(" "),  "text": v} for k, v in results.items()]
-        print(json.dumps(results, indent=2))
-    else: print([])
+
+def split_db_records():
+    return split_records(tdb.db.get_text())
 
 
 def split_records(text: str):

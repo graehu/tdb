@@ -7,11 +7,7 @@ import tdb.tags
 import tdb.records
 import tdb.config
 import tdb.rake
-
-# Set the name of the database file.
-db_path = os.path.dirname(__file__)
-db_path = os.path.join(db_path, "..", "db.txt")
-db_path = os.path.abspath(db_path)
+import tdb.db
 
 def main():
     if len(sys.argv) < 2:
@@ -35,26 +31,18 @@ def main():
                 os.remove(temp.name)
 
         if text:
-            tdb.records.add_record(db_path, text)
+            tdb.records.add_record(text)
         else:
             print("No text provided. Record not added.")
 
     elif command == "display":
-        tdb.records.print_records(db_path)
+        tdb.records.print_records()
 
     elif command == "tags":
-        with open(db_path) as fd:
-            records = tdb.records.split_records(fd.read())
-            results = []
-            for k, v in records.items():
-                results.append({"date": k.isoformat(" "), "text": v, "tags": tdb.tags.find_tags(v)})
-            print(json.dumps(results, indent=2))
+        tdb.tags.print_tags()
+            
 
     elif command == "find":
-        
-        if not os.path.exists(db_path):
-            print("no entries in the db")
-            sys.exit(1)
 
         kw_ext = tdb.rake.Rake()
 
@@ -65,28 +53,29 @@ def main():
         
         text_kw = kw_ext.run(text)
 
-        with open(db_path) as fd:
-            records = tdb.records.split_records(fd.read())
-            results = []
-            for k, v in records.items():
-                record_kw = kw_ext.run(v)
-                result = {"date":k.isoformat(" "), "text":v, "score":0}
-                for k1, v1 in record_kw:
-                    for k2, v2 in text_kw:
-                        if tdb.rake.similarity_score(k1, k2) > 0.8:
-                            result["score"] += (v1+v2)*0.5
-                
-                if result["score"] > 0:
-                    results.append(result)
+        records = tdb.records.split_records(tdb.db.get_text())
+        results = []
+        for k, v in records.items():
+            record_kw = kw_ext.run(v)
+            result = {"date":k.isoformat(" "), "text":v, "score":0}
+            for k1, v1 in record_kw:
+                for k2, v2 in text_kw:
+                    if tdb.rake.similarity_score(k1, k2) > 0.8:
+                        result["score"] += (v1+v2)*0.5
+            
+            if result["score"] > 0:
+                results.append(result)
 
-            results = sorted(results, key=lambda result: result["score"], reverse=True)
-            print(json.dumps(results, indent=2))
+        results = sorted(results, key=lambda result: result["score"], reverse=True)
+        print(json.dumps(results, indent=2))
 
     elif command == "config":
+        tdb.db._skip_shutdown = True
         subprocess.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}", shell=True)
 
     elif command == "open":
-        subprocess.run(f"{tdb.config.get('editor')} {db_path}", shell=True)
+        tdb.db._skip_shutdown = True
+        subprocess.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}", shell=True)
 
     elif command == "template":
         template = ""
@@ -109,7 +98,7 @@ def main():
                     return
 
                 if text:
-                    tdb.records.add_record(db_path, text)
+                    tdb.records.add_record(text)
                 else:
                     print("No text provided. Record not added.")
         else:

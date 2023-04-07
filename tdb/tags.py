@@ -1,14 +1,26 @@
 import re
 import csv
-from typing import List, Tuple
+import tdb.records
+
 
 def _safe_re_search(string, position, pattern) -> int:
     match = pattern.search(string, position)
     return match.span()[0] if match else -1
 
 
-def find_tags(text: str) -> List[Tuple[str, List[str]]]:
-    re_tag = re.compile(r'@(\w+)')
+def print_tags():
+    import json
+    records = tdb.records.split_db_records()
+    results = []
+    for k, v in records.items():
+        tags = find_tags(v)
+        if tags: results.append({"date": k.isoformat(" "), "text": v, "tags": tags})
+    print(json.dumps(results, indent=2))
+    pass
+
+
+def find_tags(text: str):
+    re_tag = re.compile(r'\s@(\w+)')
     re_end = re.compile(r'([\r\n])')
     tags = []
     tag_spans = []
