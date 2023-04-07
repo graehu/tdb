@@ -32,7 +32,7 @@ def get_text(): return _db_edits
 
 def append(text):
     global _db_edits
-    if _db_edits[-1] != "\n":
+    if _db_edits and _db_edits[-1] != "\n":
         _db_edits += "\n"+text
     else:
         _db_edits += text
