@@ -35,7 +35,6 @@ def parse_options():
 
 
 def parse_range(args):
-    print(args)
     from datetime import datetime, timedelta
     import re
     now = datetime.now()
@@ -66,7 +65,6 @@ def parse_range(args):
                     pass
     if len(operations) == 1:
         operations.append(now)
-    print([o.isoformat(" ") for o in operations])
     return operations
 
 
