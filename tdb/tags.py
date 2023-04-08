@@ -1,31 +1,19 @@
 import re
 import csv
-import tdb.records
 
+re_tag = re.compile(r'\s@(\w+)')
 
 def _safe_re_search(string, position, pattern) -> int:
     match = pattern.search(string, position)
     return match.span()[0] if match else -1
 
 
-def print_tags():
-    import json
-    records = tdb.records.split_db_records()
-    results = []
-    for k, v in records.items():
-        tags = find_tags(v)
-        if tags: results.append({"date": k.isoformat(" "), "text": v, "tags": tags})
-    print(json.dumps(results, indent=2))
-    pass
-
-
 def find_tags(text: str):
-    re_tag = re.compile(r'\s@(\w+)')
+    #edge case, text can't start with @
     re_end = re.compile(r'([\r\n])')
     tags = []
     tag_spans = []
     for match in re_tag.finditer(text):
-
         tag = match.group(1)
         end = match.span()[1]
         match_start = match.span()[0]
@@ -52,3 +40,10 @@ def find_tags(text: str):
             tags.append((tag, []))
 
     return tags
+
+def contains_tag(text, tag):
+    for match in re_tag.finditer(text):
+        if match.group(1) == tag:
+            return True
+    return False
+
