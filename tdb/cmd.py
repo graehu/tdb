@@ -63,8 +63,9 @@ def parse_range(args):
                 except ValueError:
                     print("bad record range format: "+select)
                     pass
-    if len(operations) == 1:
-        operations.append(now)
+
+    if len(operations) == 1: operations.append(now)
+    
     return operations
 
 

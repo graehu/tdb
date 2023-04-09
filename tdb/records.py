@@ -35,6 +35,8 @@ def split_db_records(options=None):
 def split_records(text: str, options=None):
     last = None
     current = None
+    id = 0
+    id_offset = -1
     records = []
 
     tags = options["tags"] if options else None
@@ -45,15 +47,51 @@ def split_records(text: str, options=None):
         nonlocal records
         nonlocal last
         nonlocal current
+        nonlocal id
+        nonlocal id_offset
+
         if last:
+            id += 1
             x,y = last["span"][1], current["span"][0]
             section = text[x:y]
             date = last["date"]
             last["text"] = section
             last["span"] = (x ,y)
+            last["id"] = id
             
             skip = False
-            if not skip and ranges: skip = not any([(r[0] <= date <= r[1]) for r in ranges])
+            if not skip and ranges:
+                skip = True
+                for r in ranges:
+                    if all(map(lambda x: isinstance(x, int), r)): # TODO: handle in post filter, needs list len
+                        skip = False
+                        break
+                    elif isinstance(r[0], int):
+                        if r[0] >= 0 and r[0] <= date:
+                            skip = False
+                            break
+                        else: # TODO: handle in post filter, needs list len
+                            skip = False
+                            break
+                    elif isinstance(r[1], int):
+                        if r[1] >= 0 and date >= r[0]:
+                            if id_offset == -1: id_offset = id
+                            if (id - id_offset) < r[1]:
+                                skip = False
+                                break
+                            else:
+                                skip = True
+                                break
+                        elif r[1] >= 0 and date <= r[0]:
+                            skip = True
+                            break
+                        else:
+                            skip = False
+                            break # TODO: handle in post filter, needs list len
+                    elif r[0] <= date <= r[1]:
+                        skip = False
+                        break
+                    if not skip: break
             if not skip and contains: skip = not any([c in section for c in contains])
             if not skip and tags: skip = not any([tdb.tags.contains_tag(section, t) for t in tags])            
             if not skip: records.append(last)
@@ -62,12 +100,14 @@ def split_records(text: str, options=None):
         current = {
             "date":datetime.fromisoformat(match.group(1)),
             "text": "",
+            "id": 0,
             "span": match.span()
         }
         append_record()
         last = current
     
     append_record()
+    # TODO: add post list filtering here for -r=-1
     return records
 
 
