@@ -36,6 +36,7 @@ def split_records(text: str, options=None):
     last = None
     current = None
     id = 0
+    # TODO: having one id offset will break if I allow multiple ranges
     id_offset = -1
     records = []
 
@@ -58,7 +59,7 @@ def split_records(text: str, options=None):
             last["text"] = section
             last["span"] = (x ,y)
             last["id"] = id
-            
+
             skip = False
             if not skip and ranges:
                 skip = True
@@ -89,7 +90,7 @@ def split_records(text: str, options=None):
                         break
                     if not skip: break
             if not skip and contains: skip = not any([c in section for c in contains])
-            if not skip and tags: skip = not any([tdb.tags.contains_tag(section, t) for t in tags])            
+            if not skip and tags: skip = not any([tdb.tags.contains_tag(section, t) for t in tags])
             if not skip: records.append(last)
 
     for match in re_record.finditer(text):
@@ -101,49 +102,46 @@ def split_records(text: str, options=None):
         }
         append_record()
         last = current
-    
+
     append_record()
     final_records = []
     id_offset = -1
+    end_date = None
     if ranges:
         for record in records:
             for r in ranges:
                 if all(map(lambda x: isinstance(x, int), r)):
-                    if id+r[0] <= record["id"] <= id+r[0]+r[1]:
+                    if id+r[0] < record["id"] <= id+r[0]+r[1]:
                         final_records.append(record)
                         break
-                if isinstance(r[1], int):
-                    if r[1] < 0 and record["date"] <= r[0]: # tested all the r[1] above the given date.
+                elif isinstance(r[1], int):
+                    # tested all the r[1] >= 0 above the given date.
+                    if r[1] >= 0:
+                        final_records.append(record)
+
+                    elif r[1] < 0 and record["date"] <= r[0]:
                         if id_offset == -1: id_offset = record["id"]
                         if abs(record["id"]-id_offset) < abs(r[1]):
                             final_records.append(record)
                             break
-                if isinstance(r[0], int):
-                    if r[0] < 0 and record["date"] <= r[1]: # tested all the r[1] above the given date.
-                        if id_offset == -1: id_offset = record["id"]
-                        if abs(record["id"]-id_offset) < abs(r[0]):
+                elif isinstance(r[0], int):
+                    if r[0] < 0 and (id+r[0]) < record["id"]:
+                        if not end_date:
+                            if isinstance(r[1], datetime): end_date = r[1]
+                            else: end_date = record["date"] + r[1]
+                        if record["date"] <= end_date:
                             final_records.append(record)
                             break
-
                 else:
                     final_records.append(record)
                     break
+    else:
+        final_records = records
     return final_records
 
 
-def find(text):
-    text = text
-    records = split_db_records()
-    results = []
-    for record in records:
-        if text in record["text"]:
-            record.update({"date":record["date"].isoformat(" ")})
-            results.append(record)
-    print(json.dumps(results, indent=2))
-
-
 def find_similar(text):
-    kw_ext = tdb.rake.Rake()    
+    kw_ext = tdb.rake.Rake()
     text_kw = kw_ext.run(text)
 
     records = split_records(tdb.db.get_text())
@@ -154,7 +152,7 @@ def find_similar(text):
             for k2, v2 in text_kw:
                 if tdb.rake.similarity_score(k1, k2) > 0.8:
                     record["score"] += (v1+v2)*0.5
-        
+
         if record["score"] > 0:
             results.append(record)
 

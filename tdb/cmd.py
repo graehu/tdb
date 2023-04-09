@@ -53,19 +53,24 @@ def parse_range(args):
 
             if days or seconds:
                 if operations:
-                    operations.append(operations[0]+timedelta(days=days, seconds=seconds))
+                    if isinstance(operations[0], int):
+                        operations.append(timedelta(days=days, seconds=seconds))
+                    else:
+                        operations.append(operations[0]+timedelta(days=days, seconds=seconds))
                 else:
                     operations.append(now+timedelta(days=days, seconds=seconds))
             else:
                 try:
                     num = int(select)
-                    operations.append(num)
+                    if operations:
+                        operations.append(num)
+                    else:
+                        operations.append(abs(num)*-1)
                 except ValueError:
                     print("bad record range format: "+select)
                     pass
 
     if len(operations) == 1: operations.append(now)
-    
     return operations
 
 
