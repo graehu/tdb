@@ -39,9 +39,9 @@ def split_records(text: str, options=None):
     id_offset = -1
     records = []
 
-    tags = options["tags"] if options else None
-    ranges = options["ranges"] if options else None
-    contains = options["contains"] if options else None
+    tags = options["tags"] if options else []
+    ranges = options["ranges"] if options else []
+    contains = options["contains"] if options else []
 
     def append_record():
         nonlocal records
@@ -66,13 +66,9 @@ def split_records(text: str, options=None):
                     if all(map(lambda x: isinstance(x, int), r)): # TODO: handle in post filter, needs list len
                         skip = False
                         break
-                    elif isinstance(r[0], int):
-                        if r[0] >= 0 and r[0] <= date:
-                            skip = False
-                            break
-                        else: # TODO: handle in post filter, needs list len
-                            skip = False
-                            break
+                    elif isinstance(r[0], int): # TODO: handle in post filter, needs list len
+                        skip = False
+                        break
                     elif isinstance(r[1], int):
                         if r[1] >= 0 and date >= r[0]:
                             if id_offset == -1: id_offset = id
@@ -107,8 +103,32 @@ def split_records(text: str, options=None):
         last = current
     
     append_record()
-    # TODO: add post list filtering here for -r=-1
-    return records
+    final_records = []
+    id_offset = -1
+    if ranges:
+        for record in records:
+            for r in ranges:
+                if all(map(lambda x: isinstance(x, int), r)):
+                    if id+r[0] <= record["id"] <= id+r[0]+r[1]:
+                        final_records.append(record)
+                        break
+                if isinstance(r[1], int):
+                    if r[1] < 0 and record["date"] <= r[0]: # tested all the r[1] above the given date.
+                        if id_offset == -1: id_offset = record["id"]
+                        if abs(record["id"]-id_offset) < abs(r[1]):
+                            final_records.append(record)
+                            break
+                if isinstance(r[0], int):
+                    if r[0] < 0 and record["date"] <= r[1]: # tested all the r[1] above the given date.
+                        if id_offset == -1: id_offset = record["id"]
+                        if abs(record["id"]-id_offset) < abs(r[0]):
+                            final_records.append(record)
+                            break
+
+                else:
+                    final_records.append(record)
+                    break
+    return final_records
 
 
 def find(text):
