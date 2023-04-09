@@ -102,7 +102,8 @@ def split_records(text: str, options=None):
         }
         append_record()
         last = current
-
+    # hack to fix last record text
+    current = {"span": [len(text)]}
     append_record()
     final_records = []
     id_offset = -1
