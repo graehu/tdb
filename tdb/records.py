@@ -145,7 +145,7 @@ def find_similar(text):
     kw_ext = tdb.rake.Rake()
     text_kw = kw_ext.run(text)
 
-    records = split_records(tdb.db.get_text())
+    records = split_db_records()
     results = []
     for record in records:
         record_kw = kw_ext.run(record["text"])

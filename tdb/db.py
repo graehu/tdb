@@ -2,8 +2,9 @@ import os
 import atexit
 import tdb.config
 
-_skip_shutdown = False
+_skip_shutdown = True
 _db_file = tdb.config.get("db_file")
+
 
 if not _db_file:
     _db_file = "db.txt"
@@ -12,26 +13,42 @@ if not _db_file:
 
 
 if not os.path.exists(_db_file):
-    import requests
-    response = requests.get('https://icanhazdadjoke.com/', headers={'Accept': 'application/json'})
-    response = response.json()
-    if "joke" in response:
-        open(_db_file, "w").write(response["joke"]+"\n")
-    else:
-        open(_db_file, "w").write("oh hai\n")
+    from urllib.request import Request, urlopen
+    import json
+    first_line = "oh hai\n"
+    try:
+        # At some point in the future people will want this removed. :)
+        request = Request('https://icanhazdadjoke.com/', headers={'Accept': 'application/json', 'User-Agent': "tdb"})
+        response = urlopen(request).read().decode()
+        response = json.loads(response)
+        if "joke" in response: first_line = response["joke"]+"\n"
+    except Exception as e: pass
+    open(_db_file, "w").write(first_line)
 
 
-_db_text = open(_db_file).read()
 _db_mtime = os.path.getmtime(_db_file)
-_db_edits = _db_text
+_db_text = ""
+_db_edits = ""
+
+def _init():
+    global _db_text
+    global _db_edits
+    global _skip_shutdown
+    if not _db_text:
+        _db_text = open(_db_file).read()
+        _db_edits = _db_text
+        _skip_shutdown = False
 
 
 def get_filename(): return _db_file
-def get_text(): return _db_edits
+def get_text():
+    _init()
+    return _db_edits
 
 
 def append(text):
     global _db_edits
+    _init()
     if _db_edits and _db_edits[-1] != "\n":
         _db_edits += "\n"+text
     else:
@@ -40,6 +57,7 @@ def append(text):
 
 def insert(text, pos):
     global _db_edits
+    _init()
     _db_edits = _db_edits[:pos]+text+_db_edits[pos:]
 
 

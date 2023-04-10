@@ -35,11 +35,9 @@ def main():
         tdb.records.print_records(options)
 
     elif command == "config":
-        tdb.db._skip_shutdown = True
         tdb.cmd.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
 
     elif command == "open":
-        tdb.db._skip_shutdown = True
         tdb.cmd.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
 
     elif command == "template":

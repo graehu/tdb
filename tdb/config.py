@@ -1,4 +1,3 @@
-import tomllib
 import shutil
 import os
 
@@ -10,8 +9,10 @@ for editor in _editors:
         break
 
 _tdb_dir = os.path.expanduser("~/.tdb")
-_db_file = os.path.join(_tdb_dir, "db.txt")
-_conf_file = os.path.join(_tdb_dir, "config.toml")
+_tdb_dir = _tdb_dir.replace("\\", "/")
+_db_file = "/".join((_tdb_dir, "db.txt"))
+_conf_file = "/".join((_tdb_dir, "config.toml"))
+_config = None
 
 
 _conf_text = f"""\
@@ -25,9 +26,12 @@ os.makedirs(_tdb_dir, exist_ok=True)
 
 if not os.path.exists(_conf_file): open(_conf_file, "w").write(_conf_text)
 
-_config = tomllib.load(open(_conf_file, "rb"))
-
 
 def get_tdb_dir(): return _tdb_dir
 def get_filename(): return _conf_file
-def get(key): return _config.get(key)
+def get(key):
+    global _config
+    if not _config:
+        import tomllib
+        _config = tomllib.load(open(_conf_file, "rb"))
+    return _config.get(key)
