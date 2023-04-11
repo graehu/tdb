@@ -19,19 +19,21 @@ def parse_options():
     contains = []
     ranges = []
     tags = []
+    format = ""
     for split in splits:
-        if split.startswith("-r="):
-            split = split[len("-r="):]
+        if split.startswith("span:"):
+            split = split[len("span:"):]
             split = split.split(",",maxsplit=2)
             ranges.append(parse_range(split))
-
-        elif split.startswith("-c="):
-            split = split[len("-r="):]
-            contains.append(split)
-
+        elif split.startswith("form:"):
+            split = split[len("form:"):]
+            format = split
         elif split.startswith("@"):
             tags.append(split[1:])
-    return {"tags":tags, "ranges":ranges, "contains":contains}
+        else:
+            contains.append(split)
+
+    return {"tags":tags, "ranges":ranges, "contains":contains, "format":format}
 
 
 def parse_range(args):
@@ -58,6 +60,8 @@ def parse_range(args):
                     else:
                         operations.append(operations[0]+timedelta(days=days, seconds=seconds))
                 else:
+                    days = abs(days)*-1
+                    seconds = abs(seconds)*-1
                     operations.append(now+timedelta(days=days, seconds=seconds))
             else:
                 try:
@@ -76,10 +80,3 @@ def parse_range(args):
 
 def run(text):
     subprocess.run(text, shell=True)
-
-    
-if __name__ == "__main__":
-    command, splits = sys.argv[1], sys.argv[2:]
-    print(command)
-    
-

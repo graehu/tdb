@@ -9,7 +9,7 @@ import tdb.db
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: py -m tdb [add|display|tags|find]")
+        print("Usage: py -m tdb [add|show|config|open|template] [text|options]")
         sys.exit(1)
 
     command = tdb.cmd.get_command()
@@ -31,7 +31,7 @@ def main():
         else:
             print("No text provided. Record not added.")
 
-    elif command == "display":
+    elif command == "show":
         tdb.records.print_records(options)
 
     elif command == "config":
@@ -43,7 +43,10 @@ def main():
     elif command == "template":
         template = tdb.cmd.get_text()
         if os.path.exists(template):
-            temp = tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False)
+            ext = os.path.splitext(template)[1]
+            if not ext: ext = "_tdb.txt"
+            else: ext = "_tdb"+ext
+            temp = tempfile.NamedTemporaryFile(mode="w+", suffix=ext, delete=False)
             temp_text = open(template).read() 
             temp.write(temp_text)
             temp.close()

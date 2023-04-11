@@ -24,8 +24,12 @@ def add_record(text):
 def print_records(options=None):
     results = []
     results = split_db_records(options)
-    for r in results: r.update({"date":r["date"].isoformat(" ")})
-    print(json.dumps(results, indent=2))
+    if options and options["format"] == "json":
+        for r in results: r.update({"date":r["date"].isoformat(" ")})
+        print(json.dumps(results, indent=2))
+    else:
+        out = "".join([f"[{r['date']}] {r['text']}" for r in results])
+        print(out.strip())
 
 
 def split_db_records(options=None):
