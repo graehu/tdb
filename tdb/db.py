@@ -66,7 +66,7 @@ def serialise():
     global _db_edits
 
     # TODO three way merge will be needed
-    if _db_mtime != os.path.getmtime(_db_file):
+    if _db_edits and _db_mtime != os.path.getmtime(_db_file):
         import difflib
         print("edits detected trying to merge")
         # a_lines = _db_text.splitlines()
