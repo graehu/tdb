@@ -102,13 +102,14 @@ def split_records(text: str, options=None):
     last = None
     current = None
     id = 0
-    # TODO: having one id offset will break if I allow multiple ranges
     id_offset = -1
     records = []
 
     tags = options["tags"] if options else []
-    ranges = options["ranges"] if options else []
+    ntags = options["ntags"] if options else []
+    span = options["span"] if options else []
     contains = options["contains"] if options else []
+    ncontains = options["ncontains"] if options else []
 
     def append_record():
         nonlocal records
@@ -127,44 +128,35 @@ def split_records(text: str, options=None):
             last["id"] = id
 
             skip = False
-            if not skip and ranges:
+            if not skip and span:
                 skip = True
-                for r in ranges:
-                    if all(map(lambda x: isinstance(x, int), r)): # TODO: handle in post filter, needs list len
-                        skip = False
-                        break
-                    elif isinstance(r[0], int): # TODO: handle in post filter, needs list len
-                        skip = False
-                        break
-                    elif isinstance(r[1], int):
-                        if r[1] >= 0 and date >= r[0]:
-                            if id_offset == -1: id_offset = id
-                            if (id - id_offset) < r[1]:
-                                skip = False
-                                break
-                            else:
-                                skip = True
-                                break
-                        elif r[1] >= 0 and date <= r[0]:
-                            skip = True
-                            break
-                        else:
-                            skip = False
-                            break # TODO: handle in post filter, needs list len
-                    elif r[0] <= date <= r[1]:
-                        skip = False
-                        break
-                    if not skip: break
-            if not skip and contains: skip = not any([c in section for c in contains])
-            if not skip and tags: skip = not any([tdb.tags.contains_tag(section, t) for t in tags])
+
+                if all(map(lambda x: isinstance(x, int), span)): skip = False
+                elif isinstance(span[0], int): skip = False
+                elif isinstance(span[1], int):
+
+                    if span[1] >= 0 and date >= span[0]:
+                        if id_offset == -1: id_offset = id
+                        skip = not (id - id_offset) < span[1]
+                    else:
+                        skip = span[1] >= 0 and date <= span[0]
+
+                elif span[0] <= date <= span[1]: skip = False
+
+            sec_low = section.lower()
+
+            if not skip and contains: skip = not any([c in sec_low for c in contains])
+            if not skip and ncontains: skip = any([c in sec_low for c in ncontains])
+            if not skip and tags: skip = not any([tdb.tags.contains_tag(sec_low, t) for t in tags])
+            if not skip and ntags: skip = any([tdb.tags.contains_tag(sec_low, t) for t in ntags])
             if not skip: records.append(last)
 
     for match in re_record.finditer(text):
         current = {
-            "date":datetime.fromisoformat(match.group(1)),
+            "date": datetime.fromisoformat(match.group(1)),
             "text": "",
             "id": 0,
-            "tags":[],
+            "tags": [],
             "span": match.span()
         }
         append_record()
@@ -175,34 +167,31 @@ def split_records(text: str, options=None):
     final_records = []
     id_offset = -1
     end_date = None
-    if ranges:
+    if span:
         for record in records:
-            for r in ranges:
-                if all(map(lambda x: isinstance(x, int), r)):
-                    if id+r[0] < record["id"] <= id+r[0]+r[1]:
-                        final_records.append(record)
-                        break
-                elif isinstance(r[1], int):
-                    # tested all the r[1] >= 0 above the given date.
-                    if r[1] >= 0:
+            if all(map(lambda x: isinstance(x, int), span)):
+                if id+span[0] < record["id"] <= id+span[0]+span[1]:
+                    final_records.append(record)
+            elif isinstance(span[1], int):
+                # tested all the r[1] >= 0 above the given date.
+                if span[1] >= 0:
+                    final_records.append(record)
+
+                elif span[1] < 0 and record["date"] <= span[0]:
+                    if id_offset == -1: id_offset = record["id"]
+                    if abs(record["id"]-id_offset) < abs(span[1]):
                         final_records.append(record)
 
-                    elif r[1] < 0 and record["date"] <= r[0]:
-                        if id_offset == -1: id_offset = record["id"]
-                        if abs(record["id"]-id_offset) < abs(r[1]):
-                            final_records.append(record)
-                            break
-                elif isinstance(r[0], int):
-                    if r[0] < 0 and (id+r[0]) < record["id"]:
-                        if not end_date:
-                            if isinstance(r[1], datetime): end_date = r[1]
-                            else: end_date = record["date"] + r[1]
-                        if record["date"] <= end_date:
-                            final_records.append(record)
-                            break
-                else:
-                    final_records.append(record)
-                    break
+            elif isinstance(span[0], int):
+                if span[0] < 0 and (id+span[0]) < record["id"]:
+                    if not end_date:
+                        if isinstance(span[1], datetime): end_date = span[1]
+                        else: end_date = record["date"] + span[1]
+
+                    if record["date"] <= end_date:
+                        final_records.append(record)
+            else:
+                final_records.append(record)
     else:
         final_records = records
     final_records = [Record(**r) for r in final_records]

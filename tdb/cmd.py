@@ -17,26 +17,32 @@ def get_command():
 def parse_options():
     splits = sys.argv[2:]
     contains = []
-    ranges = []
+    ncontains = []
+    span = None
     tags = []
+    ntags = []
     format = ""
     for split in splits:
         if split.startswith("span:"):
             split = split[len("span:"):]
             split = split.split(",",maxsplit=2)
-            ranges.append(parse_range(split))
+            span = parse_span(split)
         elif split.startswith("form:"):
             split = split[len("form:"):]
-            format = split
+            format = split.lower()
+        elif split.startswith("-@"):
+            ntags.append(split[2:].lower())
         elif split.startswith("@"):
-            tags.append(split[1:])
+            tags.append(split[1:].lower())
+        elif split.startswith("-"):
+            ncontains.append(split[1:].lower())
         else:
-            contains.append(split)
+            contains.append(split.lower())
 
-    return {"tags":tags, "ranges":ranges, "contains":contains, "format":format}
+    return {"tags":tags, "ntags":ntags, "span":span, "contains":contains, "ncontains":ncontains, "format":format}
 
 
-def parse_range(args):
+def parse_span(args):
     from datetime import datetime, timedelta
     import re
     now = datetime.now()

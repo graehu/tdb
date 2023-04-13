@@ -42,6 +42,8 @@ def find_tags(text: str):
     return tags
 
 def contains_tag(text, tag):
+    text = text.lower()
+    tag = tag.lower()
     for match in re_tag.finditer(text):
         if match.group(1) == tag:
             return True
