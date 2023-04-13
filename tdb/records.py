@@ -103,7 +103,8 @@ def split_records(text: str, options=None):
     current = None
     id = 0
     id_offset = -1
-    records = []
+
+    filtered = []
 
     tags = options["tags"] if options else []
     ntags = options["ntags"] if options else []
@@ -112,7 +113,7 @@ def split_records(text: str, options=None):
     ncontains = options["ncontains"] if options else []
 
     def append_record():
-        nonlocal records
+        nonlocal filtered
         nonlocal last
         nonlocal current
         nonlocal id
@@ -149,7 +150,7 @@ def split_records(text: str, options=None):
             if not skip and ncontains: skip = any([c in sec_low for c in ncontains])
             if not skip and tags: skip = not any([tdb.tags.contains_tag(sec_low, t) for t in tags])
             if not skip and ntags: skip = any([tdb.tags.contains_tag(sec_low, t) for t in ntags])
-            if not skip: records.append(last)
+            if not skip: filtered.append(last)
 
     for match in re_record.finditer(text):
         current = {
@@ -164,23 +165,26 @@ def split_records(text: str, options=None):
     # hack to fix last record text
     current = {"span": [len(text)]}
     append_record()
-    final_records = []
+
     id_offset = -1
     end_date = None
     if span:
-        for record in records:
+        # for record in records:
+        def post_filter(record):
+            nonlocal span
+            nonlocal id_offset
+            nonlocal id
+            nonlocal end_date
             if all(map(lambda x: isinstance(x, int), span)):
-                if id+span[0] < record["id"] <= id+span[0]+span[1]:
-                    final_records.append(record)
+                return id+span[0] < record["id"] <= id+span[0]+span[1]
+
             elif isinstance(span[1], int):
                 # tested all the r[1] >= 0 above the given date.
-                if span[1] >= 0:
-                    final_records.append(record)
-
+                if span[1] >= 0: return True
+                # TODO: fix this logic, 1d,-1 is valid and this doesn't get the right record
                 elif span[1] < 0 and record["date"] <= span[0]:
                     if id_offset == -1: id_offset = record["id"]
-                    if abs(record["id"]-id_offset) < abs(span[1]):
-                        final_records.append(record)
+                    return abs(record["id"]-id_offset) < abs(span[1])
 
             elif isinstance(span[0], int):
                 if span[0] < 0 and (id+span[0]) < record["id"]:
@@ -188,14 +192,14 @@ def split_records(text: str, options=None):
                         if isinstance(span[1], datetime): end_date = span[1]
                         else: end_date = record["date"] + span[1]
 
-                    if record["date"] <= end_date:
-                        final_records.append(record)
-            else:
-                final_records.append(record)
-    else:
-        final_records = records
-    final_records = [Record(**r) for r in final_records]
-    return final_records
+                    return record["date"] <= end_date
+                
+            else: return True
+        
+        filtered = filter(post_filter, filtered)
+    
+    filtered = [Record(**r) for r in filtered]
+    return filtered
 
 
 def find_similar(text):
