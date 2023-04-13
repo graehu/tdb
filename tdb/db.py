@@ -28,50 +28,56 @@ if not os.path.exists(_db_file):
 
 _db_mtime = os.path.getmtime(_db_file)
 _db_text = ""
-_db_edits = ""
+_db_inserts = []
 
 def _init():
     global _db_text
-    global _db_edits
     global _skip_shutdown
     if not _db_text:
         _db_text = open(_db_file).read()
-        _db_edits = _db_text
         _skip_shutdown = False
 
 
 def get_filename(): return _db_file
 def get_text():
     _init()
-    return _db_edits
+    return _db_text
 
 
 def append(text):
-    global _db_edits
+    global _db_inserts
+    global _db_text
     _init()
-    if _db_edits and _db_edits[-1] != "\n":
-        _db_edits += "\n"+text
-    else:
-        _db_edits += text
+    if _db_text and _db_text[-1] != '\n':
+        text = '\n'+text
+    insert(text, len(_db_text), len(_db_text))
 
 
-def insert(text, pos):
-    global _db_edits
+def replace(old, new):
+    global _db_inserts
     _init()
-    _db_edits = _db_edits[:pos]+text+_db_edits[pos:]
+    id = _db_text.index(old)
+    if id != -1:
+        insert(new, id, id+len(old))
+
+
+def insert(text, start, end):
+    global _db_inserts
+    _init()
+    _db_inserts.append([text, (start, end)])
 
 
 def serialise():
     global _db_text
-    global _db_edits
+    global _db_inserts
 
     # TODO three way merge will be needed
-    if _db_edits and _db_mtime != os.path.getmtime(_db_file):
+    if _db_inserts and _db_mtime != os.path.getmtime(_db_file):
         import difflib
         print("edits detected trying to merge")
         # a_lines = _db_text.splitlines()
         b_lines = [l[:-1] for l in open(get_filename()).readlines()]
-        c_lines = _db_edits.splitlines()
+        c_lines = _db_inserts.splitlines()
         
         # ac_match = difflib.SequenceMatcher(a=a_lines, b=c_lines)
         # ac_opcodes = ac_match.get_opcodes()
@@ -95,7 +101,19 @@ def serialise():
         
         open(get_filename(), "w").write("\n".join(output)+"\n")
     else:
-        open(get_filename(), "w").write(_db_edits)
+        while _db_inserts:
+            insert, span =_db_inserts.pop(0)
+            delta = len(insert)-(span[1]-span[0])
+            # print(len(insert))
+            # print(_db_text[:span[0]])
+            # print("-")
+            # print(insert)
+            # print("-")
+            # print(_db_text[span[1]:])
+            _db_text = _db_text[:span[0]] + insert + _db_text[span[1]:]
+            _db_inserts = [[i[0], (i[1][0]+delta, i[1][1]+delta)] if i[1][0] > span[0] else i for i in _db_inserts]
+            # print(_db_inserts)
+        open(get_filename(), "w").write(_db_text)
 
 
 @atexit.register

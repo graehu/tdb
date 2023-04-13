@@ -6,7 +6,26 @@ import tdb.tags
 import tdb.rake
 
 # This is the format: "2023-04-05 09:59:33"
-re_record = re.compile(r'^\[(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] ', re.MULTILINE | re.IGNORECASE)
+re_record = re.compile(r'^\[(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] ?', re.MULTILINE | re.IGNORECASE)
+
+class Record(object):
+    text = ""
+    date = None
+    tags = []
+    span = (0,0)
+    id = -1
+    def __init__(self, text, date, tags, span, id):
+        self.text = text
+        if isinstance(date, str):
+            self.date = datetime.fromisoformat(date)
+        else:
+            self.date = date
+        self.tags = tags
+        self.span = span
+        self.id = id
+
+    def __str__(self):
+        return f"[{self.date.isoformat(' ')}] {self.text}"
 
 
 def make_record(text):
@@ -19,6 +38,37 @@ def add_record(text):
     record = make_record(text)
     tdb.db.append(record)
     print("Record added successfully!")
+
+
+def modify_records(records, text):
+    new_records = split_records(text)
+    found = []
+    text = tdb.db.get_text()
+    for r1 in new_records:
+        modified = None
+        new = True
+        for r2 in records:
+            if str(r1) != str(r2) and r1.date == r2.date:
+                modified = r2
+                found.append(r2)
+                break
+            elif r1.date == r2.date:
+                found.append(r2)
+                new = False
+                break
+        
+        if modified:
+            # print(f"mod: {r1}")
+            tdb.db.replace(str(r2), str(r1))
+        elif new:
+            pass
+            # print(f"new: {r1}")
+    for r1 in records:
+        if not r1 in found:
+            # print(f"del: {r1}")
+            pass
+    
+    print("Records modified successfully!")
 
 
 def print_records(options=None):
@@ -102,6 +152,7 @@ def split_records(text: str, options=None):
             "date":datetime.fromisoformat(match.group(1)),
             "text": "",
             "id": 0,
+            "tags":[],
             "span": match.span()
         }
         append_record()
@@ -142,6 +193,7 @@ def split_records(text: str, options=None):
                     break
     else:
         final_records = records
+    final_records = [Record(**r) for r in final_records]
     return final_records
 
 

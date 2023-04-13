@@ -11,7 +11,7 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: py -m tdb [add|show|config|open|template] [text|options]")
         sys.exit(1)
-
+    
     command = tdb.cmd.get_command()
     options = tdb.cmd.parse_options()
 
@@ -38,7 +38,26 @@ def main():
         tdb.cmd.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
 
     elif command == "open":
-        tdb.cmd.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
+        if any(options.values()):
+            records = tdb.records.split_db_records(options)
+            records_text = "".join([str(r) for r in records])
+            temp = tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False)
+            temp.write(records_text)
+            temp.close()
+            tdb.cmd.run(f"{tdb.config.get('editor')} {temp.name}")
+            
+            if os.path.exists(temp.name):
+                text = open(temp.name).read()
+                os.remove(temp.name)
+                if tdb.rake.similarity_score(records_text, text) == 1.0:
+                    print("no changes made")
+                    return
+            if text:
+                tdb.records.modify_records(records, text)
+            else:
+                print("No text provided. Record not added.")
+        else:
+            tdb.cmd.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
 
     elif command == "template":
         template = tdb.cmd.get_text()
