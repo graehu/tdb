@@ -9,7 +9,7 @@ import tdb.db
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: py -m tdb [add|show|config|open|template] [text|options]")
+        print("Usage: py -m tdb [add|show|config|edit|template] [text|options]")
         sys.exit(1)
     
     command = tdb.cmd.get_command()
@@ -18,7 +18,7 @@ def main():
     if command == "add":
         text = tdb.cmd.get_text()
         if not text:
-            temp = tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False)
+            temp = tempfile.NamedTemporaryFile(mode="w+", suffix="_tdb.txt", delete=False)
             temp.close()
             tdb.cmd.run(f"{tdb.config.get('editor')} {temp.name}")
             
@@ -37,11 +37,11 @@ def main():
     elif command == "config":
         tdb.cmd.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
 
-    elif command == "open":
+    elif command == "edit":
         if any(options.values()):
             records = tdb.records.split_db_records(options)
             records_text = "".join([str(r) for r in records])
-            temp = tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False)
+            temp = tempfile.NamedTemporaryFile(mode="w+", suffix="_tdb.txt", delete=False)
             temp.write(records_text)
             temp.close()
             tdb.cmd.run(f"{tdb.config.get('editor')} {temp.name}")
@@ -62,9 +62,10 @@ def main():
     elif command == "template":
         template = tdb.cmd.get_text()
         if os.path.exists(template):
-            ext = os.path.splitext(template)[1]
-            if not ext: ext = "_tdb.txt"
-            else: ext = "_tdb"+ext
+            basename, ext = os.path.splitext(template)
+            basename = os.path.basename(basename)
+            if not ext: ext = f"_{basename}_tdb.txt"
+            else: ext = f"_{basename}_tdb"+ext
             temp = tempfile.NamedTemporaryFile(mode="w+", suffix=ext, delete=False)
             temp_text = open(template).read() 
             temp.write(temp_text)

@@ -26,16 +26,27 @@ class Record(object):
 
     def __str__(self):
         return f"[{self.date.isoformat(' ')}] {self.text}"
+    
+    def asdict(self):
+        return {'text': self.text, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span, 'id':self.id }
 
 
-def make_record(text):
-    now = datetime.now()
-    now = now.isoformat(" ", "seconds")
-    return f"[{now}] {text}\n"
+def make_record(date, text):
+    date = date.isoformat(" ", "seconds")
+    return f"[{date}] {text}\n"
 
 
 def add_record(text):
-    record = make_record(text)
+    # ensure new records are at least a second apart.
+    # else append.
+    dates = re_record.findall(tdb.db.get_text())
+    last = datetime.fromisoformat(dates[-1])
+    now = datetime.now()
+    delta = (now-last).seconds+((now-last).microseconds)/1E6
+    if  delta > 1.0:
+        record = make_record(now, text)
+    else:
+        record = f"tdb {delta:02.2f}: "+text
     tdb.db.append(record)
     print("Record added successfully!")
 
@@ -58,14 +69,15 @@ def modify_records(records, text):
                 break
         
         if modified:
-            # print(f"mod: {r1}")
             tdb.db.replace(str(r2), str(r1))
         elif new:
-            pass
             # print(f"new: {r1}")
+            tdb.db.append(str(r1))
+            pass
     for r1 in records:
         if not r1 in found:
             # print(f"del: {r1}")
+            tdb.db.replace(str(r1), "")
             pass
     
     print("Records modified successfully!")
@@ -75,10 +87,10 @@ def print_records(options=None):
     results = []
     results = split_db_records(options)
     if options and options["format"] == "json":
-        for r in results: r.update({"date":r["date"].isoformat(" ")})
-        print(json.dumps(results, indent=2))
+        res = [r.asdict() for r in results]
+        print(json.dumps(res, indent=2))
     else:
-        out = "".join([f"[{r['date']}] {r['text']}" for r in results])
+        out = "".join([str(r) for r in results])
         print(out.strip())
 
 
