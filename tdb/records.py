@@ -106,10 +106,12 @@ def split_records(text: str, options=None):
 
     filtered = []
 
-    tags = options["tags"] if options else []
+    otags = options["otags"] if options else []
     ntags = options["ntags"] if options else []
+    atags = options["atags"] if options else []
     span = options["span"] if options else []
-    contains = options["contains"] if options else []
+    acontains = options["acontains"] if options else []
+    ocontains = options["ocontains"] if options else []
     ncontains = options["ncontains"] if options else []
 
     def append_record():
@@ -146,9 +148,11 @@ def split_records(text: str, options=None):
 
             sec_low = section.lower()
 
-            if not skip and contains: skip = not any([c in sec_low for c in contains])
+            if not skip and ocontains: skip = not any([c in sec_low for c in ocontains])
+            if not skip and acontains: skip = not all([c in sec_low for c in acontains])
             if not skip and ncontains: skip = any([c in sec_low for c in ncontains])
-            if not skip and tags: skip = not any([tdb.tags.contains_tag(sec_low, t) for t in tags])
+            if not skip and otags: skip = not any([tdb.tags.contains_tag(sec_low, t) for t in otags])
+            if not skip and atags: skip = not all([tdb.tags.contains_tag(sec_low, t) for t in atags])
             if not skip and ntags: skip = any([tdb.tags.contains_tag(sec_low, t) for t in ntags])
             if not skip: filtered.append(last)
 

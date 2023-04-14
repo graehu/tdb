@@ -16,30 +16,27 @@ def get_command():
 
 def parse_options():
     splits = sys.argv[2:]
-    contains = []
+    ocontains = []
     ncontains = []
-    span = None
-    tags = []
+    acontains = []
+    atags = []
+    otags = []
     ntags = []
+    span = None
     format = ""
     for split in splits:
-        if split.startswith("span:"):
-            split = split[len("span:"):]
-            split = split.split(",",maxsplit=2)
-            span = parse_span(split)
-        elif split.startswith("form:"):
-            split = split[len("form:"):]
-            format = split.lower()
-        elif split.startswith("-@"):
-            ntags.append(split[2:].lower())
-        elif split.startswith("@"):
-            tags.append(split[1:].lower())
-        elif split.startswith("-"):
-            ncontains.append(split[1:].lower())
-        else:
-            contains.append(split.lower())
+        if split.startswith("span:"): span = parse_span(split[len("span:"):].split(",",maxsplit=2))
+        elif split.startswith("form:"): format = split[len("form:"):].lower()
+        elif split.startswith("+@"): atags.append(split[2:].lower())
+        elif split.startswith("-@"): ntags.append(split[2:].lower())
+        elif split.startswith("@"): otags.append(split[1:].lower())
+        elif split.startswith("+"): acontains.append(split[1:].lower())
+        elif split.startswith("-"): ncontains.append(split[1:].lower())
+        else: ocontains.append(split.lower())
 
-    return {"tags":tags, "ntags":ntags, "span":span, "contains":contains, "ncontains":ncontains, "format":format}
+    return {"otags":otags, "atags":atags, "ntags":ntags,
+            "acontains":acontains, "ocontains":ocontains, "ncontains":ncontains,
+            "span":span, "format":format}
 
 
 def parse_span(args):
