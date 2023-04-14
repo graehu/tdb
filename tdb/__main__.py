@@ -9,7 +9,7 @@ import tdb.db
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: py -m tdb [add|show|config|edit|template] [text|options]")
+        print("Usage: py -m tdb [add | show | config | edit | template] [text | options]")
         sys.exit(1)
     
     command = tdb.cmd.get_command()
@@ -18,7 +18,8 @@ def main():
     if command == "add":
         text = tdb.cmd.get_text()
         if not text:
-            temp = tempfile.NamedTemporaryFile(mode="w+", suffix="_tdb.txt", delete=False)
+            
+            temp = tempfile.NamedTemporaryFile(mode="w+", prefix="tdb_add_", suffix=".txt", delete=False)
             temp.close()
             tdb.cmd.run(f"{tdb.config.get('editor')} {temp.name}")
             
@@ -41,7 +42,7 @@ def main():
         if any(options.values()):
             records = tdb.records.split_db_records(options)
             records_text = "".join([str(r) for r in records])
-            temp = tempfile.NamedTemporaryFile(mode="w+", suffix="_tdb.txt", delete=False)
+            temp = tempfile.NamedTemporaryFile(mode="w+", prefix="tdb_edit_", suffix=".txt", delete=False)
             temp.write(records_text)
             temp.close()
             tdb.cmd.run(f"{tdb.config.get('editor')} {temp.name}")
@@ -52,10 +53,8 @@ def main():
                 if tdb.rake.similarity_score(records_text, text) == 1.0:
                     print("no changes made")
                     return
-            if text:
-                tdb.records.modify_records(records, text)
-            else:
-                print("No text provided. Record not added.")
+                else:
+                    tdb.records.modify_records(records, text)
         else:
             tdb.cmd.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
 
@@ -64,10 +63,9 @@ def main():
         if os.path.exists(template):
             basename, ext = os.path.splitext(template)
             basename = os.path.basename(basename)
-            if not ext: ext = f"_{basename}_tdb.txt"
-            else: ext = f"_{basename}_tdb"+ext
-            temp = tempfile.NamedTemporaryFile(mode="w+", suffix=ext, delete=False)
-            temp_text = open(template).read() 
+            if not ext: ext = ".txt"
+            temp = tempfile.NamedTemporaryFile(mode="w+", prefix=f"{basename}_", suffix=ext, delete=False)
+            temp_text = open(template).read()
             temp.write(temp_text)
             temp.close()
             tdb.cmd.run(f"{tdb.config.get('editor')} {temp.name}")
