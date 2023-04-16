@@ -83,3 +83,7 @@ def parse_span(args):
 
 def run(text):
     subprocess.run(text, shell=True)
+
+
+def popen(text):
+    return subprocess.Popen(text, shell=True)

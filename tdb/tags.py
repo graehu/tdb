@@ -27,19 +27,24 @@ def find_tags(text: str):
         if not skip and len(text) > end+1 and text[end] == ':':
             start = end+1
             end = _safe_re_search(text, start, re_end)
+            if end == -1: end = len(text)
             tag_spans.append((start, end))
-            csv_text = text[start:end].strip()
-            csv_reader = csv.reader([csv_text], delimiter=',', quotechar='"')
-            items = []
-            for row in csv_reader:
-                for item in row:
-                    items.append(item.strip())
+            tags.append((tag, text[start:end].strip()))
             
-            tags.append((tag, items))
         elif not skip:
-            tags.append((tag, []))
+            tags.append((tag, ""))
 
     return tags
+
+def replace_tag(text: str, tag, repl):
+    #edge case, text can't start with @
+    if tag[1]:
+        pattern = "\s?@"+tag[0]+":\s*"+re.escape(tag[1])
+    else:
+        pattern = "\s?@"+tag[0]
+    re_sub_tag = re.compile(pattern)
+    return re_sub_tag.sub(repl, text)
+
 
 def contains_tag(text, tag):
     text = text.lower()
