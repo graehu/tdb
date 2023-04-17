@@ -94,8 +94,78 @@ def print_records(options=None):
         print(out.strip())
 
 
+def filter_records(records, options):
+    max_id = len(records)
+    id_offset = -1
+    out = []
+    end_date = None
+
+    span = options["span"] if options else []
+    otags = options["otags"] if options else []
+    ntags = options["ntags"] if options else []
+    atags = options["atags"] if options else []
+    acontains = options["acontains"] if options else []
+    ocontains = options["ocontains"] if options else []
+    ncontains = options["ncontains"] if options else []
+
+    # TODO: id's should be linear by this point
+    # optimizations like:
+    # > if all(map(lambda x: isinstance(x, int), span)): records[span[0]:span[1]]
+    # should be very possible.
+    # for date ranged, just break when you leave the range.
+
+    for record in records:
+        date = record.date
+        low_text = record.text.lower()
+        skip = False
+        if not skip and span:
+            skip = True
+
+            if all(map(lambda x: isinstance(x, int), span)):
+                skip = not (max_id+span[0] < record.id <= max_id+span[0]+span[1])
+
+            elif isinstance(span[0], int):
+                if span[0] < 0 and (max_id+span[0]) < record.id:
+                    if not end_date:
+                        if isinstance(span[1], datetime): end_date = span[1]
+                        else: end_date = record.date + span[1]
+                    skip = not (date <= end_date)
+                else: assert("we're not doing dates in the future")
+
+            elif isinstance(span[1], int):
+
+                if span[1] >= 0 and date >= span[0]:
+                    if id_offset == -1: id_offset = record.id
+                    skip = not ((record.id - id_offset) < span[1])
+                
+                elif span[1] < 0 and date <= span[0]:
+                    if id_offset == -1: id_offset = record.id
+                    skip = not (abs(record.id-id_offset) < abs(span[1]))
+                
+                else:
+                    skip = span[1] >= 0 and date <= span[0]
+
+            elif span[0] <= date <= span[1]: skip = False
+
+        if not skip and ocontains: skip = not any([c in low_text for c in ocontains])
+        if not skip and acontains: skip = not all([c in low_text for c in acontains])
+        if not skip and ncontains: skip = any([c in low_text for c in ncontains])
+        if not skip and otags: skip = not any([tdb.tags.contains_tag(low_text, t) for t in otags])
+        if not skip and atags: skip = not all([tdb.tags.contains_tag(low_text, t) for t in atags])
+        if not skip and ntags: skip = any([tdb.tags.contains_tag(low_text, t) for t in ntags])
+        if not skip: out.append(record)
+    
+    return out
+
+_record_cache = []
+
+
 def split_db_records(options=None):
-    return split_records(tdb.db.get_text(), options)
+    global _record_cache
+    if not _record_cache: _record_cache = split_records(tdb.db.get_text())
+    if options:
+        return filter_records(_record_cache, options)
+    else: return _record_cache
 
 
 def split_records(text: str, options=None):
