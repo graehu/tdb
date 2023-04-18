@@ -34,9 +34,9 @@ def main():
     elif command == "edit":
         if any(options.values()):
             records = tdb.records.split_db_records(options)
-            records_text = "".join([str(r) for r in records])
-            text = tdb.session.start("tdb_edit", records_text)
-            if tdb.rake.similarity_score(records_text, text) == 1.0:
+            content = "".join([str(r) for r in records])
+            text = tdb.session.start("tdb_edit", content, records=records)
+            if content == text:
                 print("no changes made")
                 return
             else:
@@ -50,10 +50,10 @@ def main():
             basename, ext = os.path.splitext(template)
             basename = os.path.basename(basename)
             if not ext: ext = ".txt"
-            temp_text = open(template).read()
-            text = tdb.session.start("tdb_edit", temp_text, ext)
+            content = open(template).read()
+            text = tdb.session.start("tdb_edit", content, ext)
             
-            if tdb.rake.similarity_score(temp_text, text) == 1.0:
+            if content == text:
                 print("no changes made")
                 return
 
