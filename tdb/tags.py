@@ -1,5 +1,5 @@
 import re
-import csv
+import shlex
 
 re_tag = re.compile(r'\s@(\w+)')
 
@@ -54,3 +54,29 @@ def contains_tag(text, tag):
             return True
     return False
 
+
+def parse_remove_cmd(text, args, tags):
+    for arg in args:
+        if arg.startswith("@"):
+            arg = arg[1:]
+            if arg == "tdb": continue
+            rtag = filter(lambda x: x[0] == arg, tags)
+            rtag = list(rtag)
+            if rtag:
+                print(f"@tdb: remove {rtag[0]}")
+                text = replace_tag(text, rtag[0], "")
+    return text
+
+
+def parse_cmds(text):
+    tags = find_tags(text)
+    for tag in tags:
+        if tag[0] == "tdb" and tag[1]:
+            text = replace_tag(text, tag, "")
+            args = shlex.split(tag[1].lower())
+            if args[0] == "remove":
+                text = parse_remove_cmd(text, args[1:], tags)
+            if args[0] == "add":
+                print("@tdb: add doesn't work! We'll need access to records here.")
+                
+    return text

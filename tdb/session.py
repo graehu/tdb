@@ -1,6 +1,5 @@
 import os
 import time
-import shlex
 import tempfile
 import tdb.cmd
 import tdb.tags
@@ -19,20 +18,7 @@ def start(name, content="", ext=".txt"):
             time.sleep(0.1)
             modtime = os.path.getmtime(temp_file.name)
             cur_text = open(temp_file.name).read()
-            tags = tdb.tags.find_tags(cur_text)
-            for tag in tags:
-                if tag[0] == "tdb" and tag[1]:
-                    cur_text = tdb.tags.replace_tag(cur_text, tag, "")
-                    args = shlex.split(tag[1].lower())
-                    if args[0] == "remove":
-                        for arg in args[1:]:
-                            if arg.startswith("@"):
-                                arg = arg[1:]
-                                if arg == "tdb": continue
-                                rtag = filter(lambda x: x[0] == arg, tags)
-                                rtag = list(rtag)
-                                if rtag:
-                                    cur_text = tdb.tags.replace_tag(cur_text, rtag[0], "")
+            cur_text = tdb.tags.parse_cmds(cur_text)
             open(temp_file.name, "w").write(cur_text)
             modtime = os.path.getmtime(temp_file.name)
         time.sleep(0.1)
