@@ -31,6 +31,7 @@ def import_addons():
     if not tdb.config.get("addons"):
         print(f"No addons found in '{tdb.config.get_filename()}'")
         print("@tdb: commands will not work.")
+        return
 
     for e in tdb.config.get("addons"):
         module = import_addon(e)
