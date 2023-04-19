@@ -39,11 +39,15 @@ def make_record(date, text):
 def add_record(text):
     # ensure new records are at least a second apart.
     # else append.
-    dates = re_record.findall(tdb.db.get_text())
-    last = datetime.fromisoformat(dates[-1])
     now = datetime.now()
-    delta = (now-last).seconds+((now-last).microseconds)/1E6
-    if  delta > 1.0:
+    dates = re_record.findall(tdb.db.get_text())
+    if dates:
+        last = datetime.fromisoformat(dates[-1])
+        delta = (now-last).seconds+((now-last).microseconds)/1E6
+    else:
+        delta = 1.0
+
+    if  delta >= 1.0:
         record = make_record(now, text)
     else:
         record = f"tdb {delta:02.2f}: "+text
