@@ -30,6 +30,8 @@ _db_mtime = os.path.getmtime(_db_file)
 _db_text = ""
 _db_inserts = []
 
+def get_mtime(): return _db_mtime
+
 def _init():
     global _db_text
     global _skip_shutdown

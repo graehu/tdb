@@ -43,11 +43,9 @@ class Record(object):
         if _force_hex:
             return self.entry()
         else:
-            return f"[tdb:{self.iso_date()}] {self.text}"
+            return f"[tdb:{self.iso_str()}] {self.text}"
 
-    def iso_date(self):
-        if self.delta < 1E9: return self.date.isoformat(' ')
-        else: return self.date.isoformat(' ', 'seconds')
+    def iso_str(self): return self.date.isoformat(' ')
 
     def entry(self): return f"[tdb:{hex(self.time)}] {self.text}"
     
@@ -60,7 +58,12 @@ def make_record(date, text):
 
 
 def add_record(text):
+    dt = tdb.db.get_mtime()
     ns = time.time_ns()
+    
+    if (ns/1E9) - dt > 1.0:
+        ns = int(int(ns/1E9)*1E9)
+    
     record = make_record(hex(ns), text)
     tdb.db.append_immediate(record)
 
@@ -74,24 +77,23 @@ def modify_records(records, text):
         modified = None
         new = True
         for r2 in records:
-            if str(r1) != str(r2) and r1.iso_date() == r2.iso_date():
-                print("modified")
+            if str(r1) != str(r2) and r1.iso_str() == r2.iso_str():
                 modified = r2
                 found.append(r2)
                 new = False
                 break
-            elif r1.iso_date() == r2.iso_date():
+            elif r1.iso_str() == r2.iso_str():
                 found.append(r2)
                 new = False
                 break
-            else:
-                print((r1.iso_date(), r2.iso_date()))
         
         if modified:
             tdb.db.replace(r2.entry(), r1.entry())
         elif new:
             print("new")
             # print(f"new: {r1}")
+            for r2 in records:
+                print((r1.iso_str()," != ",r2.iso_str()))
             tdb.db.append(r1.entry())
             pass
     for r1 in records:
@@ -249,7 +251,7 @@ def split_records(text: str, options=None):
 
     for match in re_hex_record.finditer(text):
         nano = int(match.group(1), 16)
-        delta = 1E9
+        delta = 0
         if last: delta = nano - last["time"]
         current = {
             "date": datetime.fromtimestamp(nano/1E9),
