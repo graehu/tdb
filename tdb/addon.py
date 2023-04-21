@@ -33,7 +33,6 @@ def add_tag_cmd(text, args):
 
 def remove_tag_cmd(text, args):
     tags = tdb.tags.find_tags(text)
-    tags = filter(lambda x: x[0] != "tdb", tags)
     tags = filter(lambda x: "@"+x[0] in args, tags)
     for tag in tags:
         text = tdb.tags.replace_tag(text, tag, "")

@@ -1,20 +1,32 @@
 import re
 from datetime import datetime
+import time
 import json
 import tdb.db
 import tdb.tags
 import tdb.rake
-
 # This is the format: "2023-04-05 09:59:33"
-re_record = re.compile(r'^\[(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] ?', re.MULTILINE | re.IGNORECASE)
+re_iso_record = re.compile(r'^\[tdb:(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{6})?)\] ?', re.MULTILINE | re.IGNORECASE)
+re_hex_record = re.compile(r'^\[tdb:(0x[\da-f]+)\] ?', re.MULTILINE | re.IGNORECASE)
+
+def convert_headers(text):
+    out = text
+    while m := re_iso_record.search(out):
+        d = datetime.fromisoformat(m.group(1))
+        d = hex(int(d.timestamp()*1E9))
+        out = out[:m.span(1)[0]]+d+out[m.span(1)[1]:]
+    return out
+
+_force_hex = False
 
 class Record(object):
     text = ""
+    time = 0
     date = None
     tags = []
     span = (0,0)
     id = -1
-    def __init__(self, text, date, tags, span, id):
+    def __init__(self, text, time, date, tags, span, id):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -22,35 +34,30 @@ class Record(object):
             self.date = date
         self.tags = tags
         self.span = span
+        self.time = time
         self.id = id
 
-    def __str__(self):
-        return f"[{self.date.isoformat(' ')}] {self.text}"
+    def __str__(self): return self.entry() if _force_hex else f"[tdb:{self.date.isoformat(' ')}] {self.text}"
+    def entry(self): return f"[tdb:{hex(self.time)}] {self.text}"
     
     def asdict(self):
-        return {'text': self.text, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span, 'id':self.id }
+        return {'text': self.text, 'time': self.time, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span, 'id':self.id }
 
 
 def make_record(date, text):
-    date = date.isoformat(" ", "seconds")
-    return f"[{date}] {text}\n"
+    return f"[tdb:{date}] {text}\n"
 
 
 def add_record(text):
-    # ensure new records are at least a second apart.
-    # else append.
-    now = datetime.now()
-    dates = re_record.findall(tdb.db.get_text())
-    if dates:
-        last = datetime.fromisoformat(dates[-1])
-        delta = (now-last).seconds+((now-last).microseconds)/1E6
-    else:
-        delta = 1.0
-
+    ns = time.time_ns()
+    dates = re_hex_record.findall(tdb.db.get_text())
+    delta = (ns-int(dates[-1], 16))/1E9 if dates else 1.0
+    
     if  delta >= 1.0:
-        record = make_record(now, text)
+        record = make_record(hex(int(int(ns/1E9)*1E9)), text)
     else:
-        record = f"tdb {delta:02.2f}: "+text
+        record = make_record(hex(ns), text)
+
     tdb.db.append(record)
     print("Record added successfully!")
 
@@ -58,7 +65,6 @@ def add_record(text):
 def modify_records(records, text):
     new_records = split_records(text)
     found = []
-    text = tdb.db.get_text()
     for r1 in new_records:
         modified = None
         new = True
@@ -73,15 +79,15 @@ def modify_records(records, text):
                 break
         
         if modified:
-            tdb.db.replace(str(r2), str(r1))
+            tdb.db.replace(r2.entry(), r1.entry())
         elif new:
             # print(f"new: {r1}")
-            tdb.db.append(str(r1))
+            tdb.db.append(r1.entry())
             pass
     for r1 in records:
         if not r1 in found:
             # print(f"del: {r1}")
-            tdb.db.replace(str(r1), "")
+            tdb.db.replace(r1.entry(), "")
             pass
     
     print("Records modified successfully!")
@@ -167,12 +173,12 @@ _record_cache = []
 def split_db_records(options=None):
     global _record_cache
     if not _record_cache: _record_cache = split_records(tdb.db.get_text())
-    if options:
-        return filter_records(_record_cache, options)
+    if options: return filter_records(_record_cache, options)
     else: return _record_cache
 
 
 def split_records(text: str, options=None):
+    text = convert_headers(text)
     last = None
     current = None
     id = 0
@@ -230,9 +236,11 @@ def split_records(text: str, options=None):
             if not skip and ntags: skip = any([tdb.tags.contains_tag(sec_low, t) for t in ntags])
             if not skip: filtered.append(last)
 
-    for match in re_record.finditer(text):
+    for match in re_hex_record.finditer(text):
+        nano = int(match.group(1), 16)
         current = {
-            "date": datetime.fromisoformat(match.group(1)),
+            "date": datetime.fromtimestamp(nano/1E9),
+            "time": nano,
             "text": "",
             "id": 0,
             "tags": [],
