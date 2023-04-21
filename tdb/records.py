@@ -54,15 +54,14 @@ class Record(object):
 
 
 def make_record(date, text):
-    return f"[tdb:{date}] {text}\n"
+    return f"\n[tdb:{date}] {text}"
 
 
 def add_record(text):
     dt = tdb.db.get_mtime()
     ns = time.time_ns()
     
-    if (ns/1E9) - dt > 1.0:
-        ns = int(int(ns/1E9)*1E9)
+    if (ns/1E9) - dt > 1.0: ns = int(int(ns/1E9)*1E9)
     
     record = make_record(hex(ns), text)
     tdb.db.append_immediate(record)
@@ -90,7 +89,6 @@ def modify_records(records, text):
         if modified:
             tdb.db.replace(r2.entry(), r1.entry())
         elif new:
-            print("new")
             # print(f"new: {r1}")
             for r2 in records:
                 print((r1.iso_str()," != ",r2.iso_str()))
