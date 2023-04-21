@@ -6,7 +6,6 @@ import tdb.session
 import tdb.config
 import tdb.cli
 import tdb.db
-
 import importlib.util
 
 _dirname = os.path.dirname(__file__)
@@ -106,6 +105,10 @@ def main():
         print("Invalid command. Try again.")
         sys.exit(1)
     
-
+_profile = False
 if __name__ == "__main__":
-    main()
+    if _profile:
+        import cProfile
+        cProfile.run("main()")
+    else:
+        main()

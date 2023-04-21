@@ -52,6 +52,7 @@ def append(text):
         text = '\n'+text
     insert(text, len(_db_text), len(_db_text))
 
+def append_immediate(text): open(get_filename(), "a").write(text)
 
 def replace(old, new):
     global _db_inserts

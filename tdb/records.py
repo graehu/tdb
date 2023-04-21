@@ -22,11 +22,12 @@ _force_hex = False
 class Record(object):
     text = ""
     time = 0
+    delta = 0
     date = None
     tags = []
     span = (0,0)
     id = -1
-    def __init__(self, text, time, date, tags, span, id):
+    def __init__(self, text, time, delta, date, tags, span, id):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -35,9 +36,19 @@ class Record(object):
         self.tags = tags
         self.span = span
         self.time = time
+        self.delta = delta
         self.id = id
 
-    def __str__(self): return self.entry() if _force_hex else f"[tdb:{self.date.isoformat(' ')}] {self.text}"
+    def __str__(self):
+        if _force_hex:
+            return self.entry()
+        else:
+            return f"[tdb:{self.iso_date()}] {self.text}"
+
+    def iso_date(self):
+        if self.delta < 1E9: return self.date.isoformat(' ')
+        else: return self.date.isoformat(' ', 'seconds')
+
     def entry(self): return f"[tdb:{hex(self.time)}] {self.text}"
     
     def asdict(self):
@@ -50,15 +61,9 @@ def make_record(date, text):
 
 def add_record(text):
     ns = time.time_ns()
-    dates = re_hex_record.findall(tdb.db.get_text())
-    delta = (ns-int(dates[-1], 16))/1E9 if dates else 1.0
-    
-    if  delta >= 1.0:
-        record = make_record(hex(int(int(ns/1E9)*1E9)), text)
-    else:
-        record = make_record(hex(ns), text)
+    record = make_record(hex(ns), text)
+    tdb.db.append_immediate(record)
 
-    tdb.db.append(record)
     print("Record added successfully!")
 
 
@@ -69,18 +74,23 @@ def modify_records(records, text):
         modified = None
         new = True
         for r2 in records:
-            if str(r1) != str(r2) and r1.date == r2.date:
+            if str(r1) != str(r2) and r1.iso_date() == r2.iso_date():
+                print("modified")
                 modified = r2
-                found.append(r2)
-                break
-            elif r1.date == r2.date:
                 found.append(r2)
                 new = False
                 break
+            elif r1.iso_date() == r2.iso_date():
+                found.append(r2)
+                new = False
+                break
+            else:
+                print((r1.iso_date(), r2.iso_date()))
         
         if modified:
             tdb.db.replace(r2.entry(), r1.entry())
         elif new:
+            print("new")
             # print(f"new: {r1}")
             tdb.db.append(r1.entry())
             pass
@@ -210,6 +220,7 @@ def split_records(text: str, options=None):
             last["span"] = (x ,y)
             last["id"] = id
 
+
             skip = False
             if not skip and span:
                 skip = True
@@ -238,9 +249,12 @@ def split_records(text: str, options=None):
 
     for match in re_hex_record.finditer(text):
         nano = int(match.group(1), 16)
+        delta = 1E9
+        if last: delta = nano - last["time"]
         current = {
             "date": datetime.fromtimestamp(nano/1E9),
             "time": nano,
+            "delta": delta,
             "text": "",
             "id": 0,
             "tags": [],
