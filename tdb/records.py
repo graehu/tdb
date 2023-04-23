@@ -8,6 +8,9 @@ import tdb.rake
 # This is the format: "2023-04-05 09:59:33"
 re_iso_record = re.compile(r'^\[tdb:(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{6})?)\] ?', re.MULTILINE | re.IGNORECASE)
 re_hex_record = re.compile(r'^\[tdb:(0x[\da-f]+)\] ?', re.MULTILINE | re.IGNORECASE)
+_record_cache = []
+_needs_sort = False
+_force_hex = False
 
 def convert_headers(text):
     out = text
@@ -17,7 +20,6 @@ def convert_headers(text):
         out = out[:m.span(1)[0]]+d+out[m.span(1)[1]:]
     return out
 
-_force_hex = False
 
 class Record(object):
     text = ""
@@ -26,8 +28,9 @@ class Record(object):
     date = None
     tags = []
     span = (0,0)
+    pos = 0
     id = -1
-    def __init__(self, text, time, delta, date, tags, span, id):
+    def __init__(self, text, time, delta, date, tags, span, pos, id):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -38,6 +41,7 @@ class Record(object):
         self.time = time
         self.delta = delta
         self.id = id
+        self.pos = pos
 
     def __str__(self):
         if _force_hex:
@@ -90,8 +94,8 @@ def modify_records(records, text):
             tdb.db.replace(r2.entry(), r1.entry())
         elif new:
             # print(f"new: {r1}")
-            for r2 in records:
-                print((r1.iso_str()," != ",r2.iso_str()))
+            # for r2 in records:
+            #     print((r1.iso_str()," != ",r2.iso_str()))
             tdb.db.append(r1.entry())
             pass
     for r1 in records:
@@ -177,17 +181,28 @@ def filter_records(records, options):
     
     return out
 
-_record_cache = []
+
+def sort_records():
+    global _record_cache
+    global _needs_sort
+    print("warning: db unordered, attempting sort.")
+    tdb.db.set_text("".join([r.entry() for r in _record_cache]))
+    _needs_sort = False
+    _record_cache = split_records(tdb.db.get_text())
+    assert(_needs_sort == False)
 
 
 def split_db_records(options=None):
     global _record_cache
+    global _needs_sort
     if not _record_cache: _record_cache = split_records(tdb.db.get_text())
+    if _needs_sort: sort_records()
     if options: return filter_records(_record_cache, options)
     else: return _record_cache
 
 
 def split_records(text: str, options=None):
+    global _needs_sort
     text = convert_headers(text)
     last = None
     current = None
@@ -258,8 +273,11 @@ def split_records(text: str, options=None):
             "text": "",
             "id": 0,
             "tags": [],
-            "span": match.span()
+            "span": match.span(),
+            "pos": match.span()[0]
         }
+        if last and last["time"] > current["time"]: _needs_sort = True
+
         append_record()
         last = current
     # hack to fix last record text
@@ -297,7 +315,7 @@ def split_records(text: str, options=None):
             else: return True
         
         filtered = filter(post_filter, filtered)
-    
+    if _needs_sort: filtered = sorted(filtered, key=lambda x: x["time"])
     filtered = [Record(**r) for r in filtered]
     return filtered
 

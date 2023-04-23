@@ -46,6 +46,12 @@ def get_text():
     return _db_text
 
 
+def set_text(text):
+    global _db_text
+    _init()
+    _db_text = text
+
+
 def append(text):
     global _db_inserts
     global _db_text
@@ -71,23 +77,36 @@ def insert(text, start, end):
     _db_inserts.append([text, (start, end)])
 
 
-def serialise():
+def perform_inserts():
     global _db_text
     global _db_inserts
-
-    db_edits = _db_text if _db_inserts else ""
+    # print(_db_inserts)
     while _db_inserts:
         insert, span =_db_inserts.pop(0)
         delta = len(insert)-(span[1]-span[0])
+        # print(delta)
         # print(len(insert))
-        # print(db_edits[:span[0]])
+        # print(_db_text[:span[0]])
         # print("-")
         # print(insert)
         # print("-")
-        # print(db_edits[span[1]:])
-        db_edits = db_edits[:span[0]] + insert + db_edits[span[1]:]
-        _db_inserts = [[i[0], (i[1][0]+delta, i[1][1]+delta)] if i[1][0] > span[0] else i for i in _db_inserts]
+        # print(_db_text[span[1]:])
+        _db_text = _db_text[:span[0]] + insert + _db_text[span[1]:]
+        _db_inserts = [[i[0], (i[1][0]+delta, i[1][1]+delta)] if i[1][0] >= span[0] else i for i in _db_inserts]
         # print(_db_inserts)
+        # print("----------------------------------")
+    
+    pass
+
+
+def serialise():
+    global _db_text
+    global _db_inserts
+    global _db_mtime
+    
+    db_edits = _db_text if _db_inserts else ""
+    perform_inserts()
+    db_edits = _db_text if db_edits else ""
 
     # TODO three way merge will be needed
     if _db_inserts and _db_mtime != os.path.getmtime(_db_file):
@@ -120,6 +139,8 @@ def serialise():
         open(get_filename(), "w").write("\n".join(output)+"\n")
     elif db_edits:
         open(get_filename(), "w").write(db_edits)
+    
+    _db_mtime = os.path.getmtime(_db_file)
 
 
 @atexit.register
