@@ -25,8 +25,20 @@ def add_tag_cmd(text, args):
         for arg in args:
             if arg.startswith("@"):
                 if not tdb.tags.contains_tag(r.text, arg[1:]):
-                    if r.text[-1] != "\n": r.text += "\n"
-                    r.text += arg+"\n"
+                    lines = r.text.splitlines()
+                    best = -1
+                    for index in range(len(lines)-1, 0, -1):
+                        if best == -1 and ":" not in lines[index]:
+                            best = index
+                        elif ":" not in lines[index] and lines[index].startswith("@"):
+                            best = index
+                            break
+                    if best != -1:
+                        if lines[index] and lines[index][-1] != " ": lines[index] += " "
+                        lines[index] += arg
+                        r.text = "\n".join(lines)+"\n"
+                    else:
+                        r.text += "\n" + arg + "\n"
 
     return "".join([str(r) for r in records])
 
