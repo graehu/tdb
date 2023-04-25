@@ -44,7 +44,7 @@ def import_addons():
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: py -m tdb [add | show | config | edit | template] [text | options]")
+        print("Usage: py -m tdb [add | show | config | edit | archive | template ] [text | options]")
         sys.exit(1)
     
     command = tdb.cli.get_command()
@@ -66,6 +66,9 @@ def main():
     elif command == "config":
         tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
 
+    elif command == "archive":
+            tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_archive()}")
+            
     elif command == "edit":
         import_addons()
         if any(options.values()):

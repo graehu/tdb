@@ -50,6 +50,7 @@ def _init():
 
 
 def get_filename(): return _db_file
+def get_archive(): return _db_archive
 def get_text():
     _init()
     return _db_text
@@ -80,7 +81,7 @@ def replace(old, new):
         insert(new, id, id+len(old))
 
 def archive(text):
-    open(_db_archive, "a").write(text)
+    open(get_archive(), "a").write(text)
     replace(text, "")
 
 
