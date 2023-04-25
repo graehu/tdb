@@ -11,6 +11,7 @@ for editor in _editors:
 _tdb_dir = os.path.expanduser("~/.tdb")
 _tdb_dir = _tdb_dir.replace("\\", "/")
 _db_file = "/".join((_tdb_dir, "db.txt"))
+_db_archive = "/".join((_tdb_dir, "db_archive.txt"))
 _conf_file = "/".join((_tdb_dir, "config.toml"))
 _addon_file = "addon.py"
 _config = None
@@ -19,6 +20,7 @@ _config = None
 _conf_text = f"""\
 # path to database
 db_file = "{_db_file}"
+db_archive = "{_db_archive}"
 # options: {_editors}
 editor = "{_editor}" # command for editor
 addons = ["{_addon_file}"]

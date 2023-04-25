@@ -4,10 +4,10 @@ import tdb.config
 
 _skip_shutdown = True
 _db_file = tdb.config.get("db_file")
+_db_archive = tdb.config.get("db_archive")
 
 
 if not _db_file:
-    _db_file = "db.txt"
     _db_file = tdb.config.get_tdb_dir()
     _db_file = os.path.join(_db_file, "db.txt")
 
@@ -24,6 +24,15 @@ if not os.path.exists(_db_file):
         if "joke" in response: first_line = response["joke"]+"\n"
     except Exception as e: pass
     open(_db_file, "w").write(first_line)
+
+
+if not _db_archive:
+    _db_archive = tdb.config.get_tdb_dir()
+    _db_archive = os.path.join(_db_archive, "db_archive.txt")
+
+
+if not os.path.exists(_db_archive):
+    open(_db_archive, "w").write("archived entries go here.")
 
 
 _db_mtime = os.path.getmtime(_db_file)
@@ -69,6 +78,10 @@ def replace(old, new):
     id = _db_text.index(old)
     if id != -1:
         insert(new, id, id+len(old))
+
+def archive(text):
+    open(_db_archive, "a").write(text)
+    replace(text, "")
 
 
 def insert(text, start, end):

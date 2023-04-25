@@ -101,7 +101,7 @@ def modify_records(records, text):
     for r1 in records:
         if not r1 in found:
             # print(f"del: {r1}")
-            tdb.db.replace(r1.entry(), "")
+            tdb.db.archive(r1.entry())
             pass
     
     print("Records modified successfully!")
