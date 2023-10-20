@@ -70,9 +70,9 @@ entry = """
         <h2 class="date">
 {date}
         </h2>
-        <pre class="content">
+        <div class="content">
 {text}
-        </pre>
+        </div>
     </div>
     <div class="entry_spacer"></div>
 """
@@ -80,7 +80,7 @@ entry = """
 def print_html(entries):
     entries_str = ""
     for in_entry in entries:
-        try:in_entry["text"] = markdown.markdown(in_entry["text"])
-        except: pass
+        try: in_entry["text"] = markdown.markdown(in_entry["text"])
+        except: in_entry = "<pre>"+in_entry+"</pre>"
         entries_str += entry.format_map(in_entry)
     print(body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str}))
