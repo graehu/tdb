@@ -5,6 +5,7 @@ import json
 import tdb.db
 import tdb.tags
 import tdb.rake
+import tdb.html
 # This is the format: "2023-04-05 09:59:33"
 re_iso_record = re.compile(r'^\[tdb:(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{6})?)\] ?', re.MULTILINE | re.IGNORECASE)
 re_hex_record = re.compile(r'^\[tdb:(0x[\da-f]+)\] ?', re.MULTILINE | re.IGNORECASE)
@@ -113,6 +114,8 @@ def print_records(options=None):
     if options and options["format"] == "json":
         res = [r.asdict() for r in results]
         print(json.dumps(res, indent=2))
+    if options and options["format"] == "html":
+        tdb.html.print_html([r.asdict() for r in results])
     else:
         out = "".join([str(r) for r in results])
         print(out.strip())

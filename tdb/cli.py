@@ -1,5 +1,6 @@
 import sys
 import subprocess
+import shlex
 
 
 def get_text():
@@ -10,12 +11,15 @@ def get_text():
     return text
 
 
-def get_command():
+def get_command(override = ""):
+    print(override)
+    if override: return shlex.split(override)[0]
     return sys.argv[1]
 
 
-def parse_options():
-    splits = sys.argv[2:]
+def parse_options(override = ""):
+    if override: splits = shlex.split(override)[1:]
+    else: splits = sys.argv[2:]
     ocontains = []
     ncontains = []
     acontains = []
@@ -26,7 +30,7 @@ def parse_options():
     format = ""
     for split in splits:
         if split.startswith("span:"): span = parse_span(split[len("span:"):].split(",",maxsplit=2))
-        elif split.startswith("form:"): format = split[len("form:"):].lower()
+        elif split.startswith("format:"): format = split[len("format:"):].lower()
         elif split.startswith("+@"): atags.append(split[2:].lower())
         elif split.startswith("-@"): ntags.append(split[2:].lower())
         elif split.startswith("@"): otags.append(split[1:].lower())

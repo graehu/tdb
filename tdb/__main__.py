@@ -46,7 +46,6 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: py -m tdb [add | show | config | edit | archive | template ] [text | options]")
         sys.exit(1)
-    
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
 
@@ -107,7 +106,7 @@ def main():
     else:
         print("Invalid command. Try again.")
         sys.exit(1)
-    
+        
 _profile = False
 if __name__ == "__main__":
     if _profile:
