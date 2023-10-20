@@ -1,4 +1,7 @@
-css="""
+import tdb.config
+import os
+
+_css="""
 html {
     font-size: 100%;
     overflow-y: scroll;
@@ -39,11 +42,15 @@ body {
   padding: 10px;
 }
 """
+_css_file = "/".join((tdb.config._tdb_dir, "tdb.css"))
+if not os.path.exists(_css_file): open(_css_file, "w+").write(_css)
+_css = open(_css_file, "r").read()
 
 body = """<html>
 
       <header>
         <style>
+/*inserted from {css_file}*/
 {css}
         </style>
     </header>
@@ -72,4 +79,4 @@ def print_html(entries):
     entries_str = ""
     for in_entry in entries:
         entries_str += entry.format_map(in_entry)
-    print(body.format_map({"css":css, "entries":entries_str}))
+    print(body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str}))
