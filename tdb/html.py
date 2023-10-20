@@ -7,11 +7,7 @@ html {
 }
 
 body {
-  background: #cccccc;
-}
-
-.title {
-  text-align: center;
+  background: #aaaaaa;
 }
 
 .container {
@@ -20,8 +16,9 @@ body {
   background: #d0d0d0;
   padding: 10px;
   border-radius: 25px;
-  border-right:  1px solid #000;
-  border-left:   1px solid  #000;
+  border-right:  1px solid #aaa;
+  border-left:   1px solid  #aaa;
+  box-shadow: 0 30px 40px rgba(0,0,0,.1);
 }
 
 .entry {
@@ -32,7 +29,12 @@ body {
   border-radius: 25px;
   /*border-top:    1px solid  #ff0;*/
   /*border-right:  2px dashed #f0F;*/
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #aaa;
+}
+.entry_spacer {
+  margin: auto;
+  width: 80%;
+  padding: 10px;
 }
 """
 
@@ -44,8 +46,9 @@ body = """<html>
         </style>
     </header>
     <body>
+    <div class="entry_spacer"></div>
     <div id="container" class="container">
-        <h1 class="title">./tdb.py</h1>
+        <div class="entry_spacer"></div>
 {entries}
     </div>
     </body>
@@ -61,6 +64,7 @@ entry = """
         </br>
         </p>
     </div>
+    <div class="entry_spacer"></div>
 """
 
 def print_html(entries):

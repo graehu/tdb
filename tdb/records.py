@@ -115,7 +115,7 @@ def print_records(options=None):
         res = [r.asdict() for r in results]
         print(json.dumps(res, indent=2))
     if options and options["format"] == "html":
-        tdb.html.print_html([r.asdict() for r in results])
+        tdb.html.print_html(reversed([r.asdict() for r in results]))
     else:
         out = "".join([str(r) for r in results])
         print(out.strip())
