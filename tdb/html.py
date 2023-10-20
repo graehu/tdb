@@ -21,6 +21,7 @@ body {
   box-shadow: 0 30px 40px rgba(0,0,0,.1);
 }
 
+
 .entry {
   margin: auto;
   width: 80%;
@@ -30,6 +31,7 @@ body {
   /*border-top:    1px solid  #ff0;*/
   /*border-right:  2px dashed #f0F;*/
   border-bottom: 1px solid #aaa;
+  overflow-x: auto;
 }
 .entry_spacer {
   margin: auto;
@@ -59,10 +61,9 @@ entry = """
         <h2 class="date">
 {date}
         </h2>
-        <p class="content">
+        <pre class="content">
 {text}
-        </br>
-        </p>
+        </pre>
     </div>
     <div class="entry_spacer"></div>
 """
