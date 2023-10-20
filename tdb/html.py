@@ -1,4 +1,6 @@
 import tdb.config
+try: import markdown
+except: pass
 import os
 
 _css="""
@@ -78,5 +80,7 @@ entry = """
 def print_html(entries):
     entries_str = ""
     for in_entry in entries:
+        try:in_entry["text"] = markdown.markdown(in_entry["text"])
+        except: pass
         entries_str += entry.format_map(in_entry)
     print(body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str}))
