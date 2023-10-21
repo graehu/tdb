@@ -55,8 +55,9 @@ body {
   page-break-inside: avoid;
 }
 .entry blockquote {
-  border-left: 3px solid #bbb;
-  padding-left: 1rem;
+    border-left: 3px solid #bbb;
+    white-space: pre-wrap;
+    padding-left: 1rem;
 }
 .entry a,
 .entry a:visited {
