@@ -4,6 +4,7 @@ except: pass
 import os
 
 _css="""
+
 html {
     font-size: 100%;
     overflow-y: scroll;
@@ -12,7 +13,7 @@ html {
 }
 
 body {
-  background: #aaaaaa;
+  background: #aaa;
 }
 
 .container {
@@ -26,15 +27,16 @@ body {
   box-shadow: 0 30px 40px rgba(0,0,0,.1);
 }
 
+.date {
+  color: #aaa;
+}
 
 .entry {
   margin: auto;
   width: 80%;
   background: #ddd;
-  padding: 10px;
-  border-radius: 25px;
-  /*border-top:    1px solid  #ff0;*/
-  /*border-right:  2px dashed #f0F;*/
+  padding: 20px;
+  border-radius: 5px;
   border-bottom: 1px solid #aaa;
   overflow-x: auto;
 }
@@ -42,6 +44,54 @@ body {
   margin: auto;
   width: 80%;
   padding: 10px;
+}
+
+.entry pre,
+.entry code {
+  background: #d0d0d0;
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  border-radius: 5px;
+}
+.entry pre {
+  padding: .5rem;
+  line-height: 1.25;
+  overflow-x: scroll;
+}
+.entry pre,
+.entry blockquote {
+  page-break-inside: avoid;
+}
+.entry blockquote {
+  border-left: 3px solid #bbb;
+  padding-left: 1rem;
+}
+.entry a,
+.entry a:visited {
+  color: #444;
+}
+
+.entry a:hover,
+.entry a:focus,
+.entry a:active {
+  color: #111;
+}
+.entry table,
+.entry th,
+.entry td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+.entry thead tr {
+  background-color: #ddd;
+}
+.entry table :is(td, th) {
+  padding: 0.3em;
+}
+.entry tbody tr:nth-child(even) {
+  background-color: #ddd;
+}
+.entry tbody tr:nth-child(odd) {
+  background-color: #ccc;
 }
 """
 _css_file = "/".join((tdb.config._tdb_dir, "tdb.css"))
@@ -67,9 +117,9 @@ body = """<html>
 """
 entry = """
     <div class="entry">
-        <h2 class="date">
+        <div class="date">
 {date}
-        </h2>
+        </div>
         <div class="content">
 {text}
         </div>
@@ -80,7 +130,7 @@ entry = """
 def print_html(entries):
     entries_str = ""
     for in_entry in entries:
-        try: in_entry["text"] = markdown.markdown(in_entry["text"])
+        try: in_entry["text"] = markdown.markdown(in_entry["text"], extensions=["extra"])
         except: in_entry = "<pre>"+in_entry+"</pre>"
         entries_str += entry.format_map(in_entry)
     print(body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str}))
