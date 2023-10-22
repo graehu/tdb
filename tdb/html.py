@@ -6,8 +6,7 @@ import shutil
 
 _css_file = "/".join((tdb.config._tdb_dir, "style.css"))
 
-if not os.path.exists(_css_file):
-  shutil.copyfile("/".join((os.path.dirname(__file__), "style.css")), _css_file)
+if not os.path.exists(_css_file): _css_file = "/".join((os.path.dirname(__file__), "style.css"))
 
 _css = open(_css_file, "r").read()
 
