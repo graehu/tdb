@@ -1,3 +1,4 @@
+@import url(http://fonts.googleapis.com/css?family=Merriweather:300italic,300);
 
 html {
     font-size: 100%;
@@ -8,6 +9,8 @@ html {
 
 body {
   background: #aaa;
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 18px;
 }
 
 .container {
@@ -24,6 +27,7 @@ body {
 .date {
   color: #aaa;
 }
+
 
 .entry {
   margin: auto;
@@ -54,9 +58,12 @@ body {
 .entry blockquote {
   page-break-inside: avoid;
 }
+hr {
+    border: 1px solid #bbb;
+}
 .entry blockquote {
     border-left: 3px solid #bbb;
-    white-space: pre-wrap;
+    white-space: pre-line;
     padding-left: 1rem;
 }
 .entry a,
@@ -72,7 +79,9 @@ body {
 .entry table,
 .entry th,
 .entry td {
-  border: 1px solid black;
+
+font-family: Menlo, Monaco, "Courier New", monospace;
+  border: 1px solid #bbb;
   border-collapse: collapse;
 }
 .entry thead tr {
@@ -87,6 +96,7 @@ body {
 .entry tbody tr:nth-child(odd) {
     background-color: #ccc;
 }
+
 
 .codehilite .hll { background-color: #ffffcc }
 .codehilite  { background: #e6e6e6; }
