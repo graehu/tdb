@@ -41,7 +41,7 @@ def replace_tag(text: str, tag, repl):
     if tag[1]:
         pattern = "\s?@"+tag[0]+":\s*"+re.escape(tag[1])
     else:
-        pattern = "\s?@"+tag[0]
+        pattern = "\s?@"+tag[0]+"(?!\S)"
     re_sub_tag = re.compile(pattern)
     return re_sub_tag.sub(repl, text)
 
