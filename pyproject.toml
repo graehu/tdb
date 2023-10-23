@@ -20,3 +20,9 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/graehu/tdb"
 "Bug Tracker" = "https://github.com/graehu/tdb/issues"
+
+[tool.hatch.build]
+include = [
+  "**/*.py",
+  "tdb/style.css"
+]
