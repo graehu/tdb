@@ -28,9 +28,7 @@ def add_tag_cmd(text, args):
                     lines = r.text.splitlines()
                     best = -1
                     for index in range(len(lines)-1, 0, -1):
-                        if best == -1 and ":" not in lines[index]:
-                            best = index
-                        elif ":" not in lines[index] and lines[index].startswith("@"):
+                        if ":" not in lines[index] and lines[index].startswith("@"):
                             best = index
                             break
 
@@ -39,7 +37,8 @@ def add_tag_cmd(text, args):
                         lines[best] += arg
                         r.text = "\n".join(lines)+"\n"
                     else:
-                        r.text += "\n" + arg + "\n"
+                        if len(lines[-1]) > 0: r.text += "\n"
+                        r.text += "\n" + arg + "\n\n"
 
     return "".join([str(r) for r in records])
 
@@ -49,4 +48,8 @@ def remove_tag_cmd(text, args):
     tags = filter(lambda x: "@"+x[0] in args, tags)
     for tag in tags:
         text = tdb.tags.replace_tag(text, tag, "")
-    return text
+    records = tdb.records.split_records(text)
+    for r in records:
+        r.text = r.text.rstrip() + "\n"
+
+    return "".join([str(r) for r in records])
