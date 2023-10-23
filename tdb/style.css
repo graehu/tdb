@@ -5,6 +5,7 @@ html {
     overflow-y: scroll;
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
+    zoom: 67%;
 }
 
 body {
