@@ -33,9 +33,10 @@ def add_tag_cmd(text, args):
                         elif ":" not in lines[index] and lines[index].startswith("@"):
                             best = index
                             break
+
                     if best != -1:
-                        if lines[index] and lines[index][-1] != " ": lines[index] += " "
-                        lines[index] += arg
+                        if lines[best] and lines[best][-1] != " ": lines[best] += " "
+                        lines[best] += arg
                         r.text = "\n".join(lines)+"\n"
                     else:
                         r.text += "\n" + arg + "\n"
