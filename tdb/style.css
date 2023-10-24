@@ -50,6 +50,9 @@ body {
   font-family: Menlo, Monaco, "Courier New", monospace;
   border-radius: 5px;
 }
+.entry .code {
+  width: 100%;
+}
 .entry pre {
   padding: .5rem;
   line-height: 1.25;
