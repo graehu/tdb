@@ -21,7 +21,7 @@ body {
   padding: 10px;
   border-radius: 25px;
   border-right:  1px solid #aaa;
-  border-left:   1px solid  #aaa;
+  border-left:   1px solid #aaa;
   box-shadow: 0 30px 40px rgba(0,0,0,.1);
 }
 
@@ -69,6 +69,8 @@ hr {
 }
 .entry a,
 .entry a:visited {
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-weight: bold;
   color: #444;
 }
 
