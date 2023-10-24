@@ -48,12 +48,13 @@ def main():
         sys.exit(1)
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
+    edit_ext = tdb.config.get('edit_ext')
 
     if command == "add":
         import_addons()
         text = tdb.cli.get_text()
         if not text:
-            text = tdb.session.start("tdb_add")
+            text = tdb.session.start("tdb_add", ext=edit_ext)
         if text:
             tdb.records.add_record(text)
         else:
@@ -73,7 +74,7 @@ def main():
         if any(options.values()):
             records = tdb.records.split_db_records(options)
             content = "".join([str(r) for r in records])
-            text = tdb.session.start("tdb_edit", content)
+            text = tdb.session.start("tdb_edit", content, ext=edit_ext)
             if content == text:
                 print("no changes made")
                 return
@@ -88,7 +89,7 @@ def main():
         if os.path.exists(template):
             basename, ext = os.path.splitext(template)
             basename = os.path.basename(basename)
-            if not ext: ext = ".txt"
+            if not ext: ext = edit_ext
             content = open(template).read()
             text = tdb.session.start("tdb_edit", content, ext)
             

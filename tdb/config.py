@@ -21,6 +21,7 @@ _conf_text = f"""\
 # path to database
 db_file = "{_db_file}"
 db_archive = "{_db_archive}"
+edit_ext = ".md"
 # options: {_editors}
 editor = "{_editor}" # command for editor
 addons = ["{_addon_file}"]
