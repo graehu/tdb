@@ -1,21 +1,24 @@
 import shlex
 import tdb.tags
 import tdb.records
-
+import tdb.html
 
 def get_addon_name(): return "tdb"
 
 def addon_cmd(context, text, args):
     print(context+" : "+str((get_addon_name(), args)))
-    text = tdb.tags.replace_tag(text, (get_addon_name(), args), "")
     try:
-        args = shlex.split(args.lower())
+        split_args = shlex.split(args)
     except ValueError as e:
-        args = []
-
-    if args:
-        if args[0] == "remove": text = remove_tag_cmd(text, args[1:])
-        elif args[0] == "add": text = add_tag_cmd(text, args[1:])
+        split_args = []
+    
+    if split_args:
+        if split_args[0] in ["add", "remove"]: text = tdb.tags.replace_tag(text, (get_addon_name(), args), "") 
+        if split_args[0] == "remove": text = remove_tag_cmd(text, split_args[1:])
+        elif split_args[0] == "add": text = add_tag_cmd(text, split_args[1:])
+        elif split_args[0] == "export": text = export_cmd(text, split_args[1:])
+    else:
+        text = tdb.tags.replace_tag(text, (get_addon_name(), args), "")
     return text
 
 
@@ -53,3 +56,15 @@ def remove_tag_cmd(text, args):
         r.text = r.text.rstrip() + "\n"
 
     return "".join([str(r) for r in records])
+
+
+def export_cmd(text, args):
+    path : str = args[0]
+    out = "\n".join([l for l in text.splitlines() if not l.startswith("@tdb")])
+    with open(path, "w+") as file:
+        if path.endswith(".html"):
+            records = tdb.records.split_records(out)
+            tdb.html.print_html(reversed([r.asdict() for r in records]), file)
+        else:
+            file.write(out)
+    return text

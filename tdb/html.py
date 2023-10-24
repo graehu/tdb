@@ -38,10 +38,10 @@ entry = """
     <div class="entry_spacer"></div>
 """
 
-def print_html(entries):
+def print_html(entries, file=None):
     entries_str = ""
     for in_entry in entries:
         try: in_entry["text"] = markdown.markdown(in_entry["text"], extensions=["extra", "codehilite"])
         except: in_entry["text"] = "<pre>"+in_entry["text"]+"</pre>"
         entries_str += entry.format_map(in_entry)
-    print(body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str}))
+    print(body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str}), file=file)
