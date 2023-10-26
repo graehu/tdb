@@ -1,4 +1,5 @@
 import shlex
+import json
 import tdb.tags
 import tdb.records
 import tdb.html
@@ -65,6 +66,10 @@ def export_cmd(text, args):
         if path.endswith(".html"):
             records = tdb.records.split_records(out)
             tdb.html.print_html(reversed([r.asdict() for r in records]), file)
+        elif path.endswith(".json"):
+            records = tdb.records.split_records(out)
+            res = [r.asdict() for r in records]
+            print(json.dumps(res, indent=2), file=file)
         else:
             file.write(out)
     return text
