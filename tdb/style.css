@@ -70,18 +70,15 @@ hr {
     white-space: pre-line;
     padding-left: 1rem;
 }
-.entry a,
-.entry a:visited {
+
+.entry a {
   font-family: Menlo, Monaco, "Courier New", monospace;
   font-weight: bold;
-  color: #444;
 }
+.entry a:link { color: #555; }
+.entry a:visited { color: #888; }
+.entry a:hover, .entry a:focus, .entry a:active { color:  #111; }
 
-.entry a:hover,
-.entry a:focus,
-.entry a:active {
-  color: #111;
-}
 .entry table,
 .entry th,
 .entry td {
