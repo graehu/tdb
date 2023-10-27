@@ -128,27 +128,26 @@ def record_merge(text_head, text_a, text_b):
         a = a_db.pop(0) if a_db else None
         b = b_db.pop(0) if b_db else None
         # do something so these eventually all reference the same thing?
-        if h and a and b:
-            if h.date == a.date and h.date == b.date: # edit
-                if h.text != a.text and h.text == b.text: h.text = a.text
-                elif h.text == a.text and h.text != b.text: h.text = b.text
-                elif h.text != a.text and h.text != b.text:
-                    print("Conflict found in "+str(h).splitlines()[0])
-                    h.text = a.text + "\n=== TDB_CONFLICT ===\n\n" + b.text
-                out.append(h)
-                continue
-            # TODO this has bugs, the above seems ok though.
-            elif h.date < a.date or h.date < b.date: 
+        if h and a and b and (h.date < a.date or h.date < b.date): 
                 while head and h.date != a.date: h = head.pop(0)
                 while head and h.date != b.date: h = head.pop(0)
                 if a.date < b.date:
                     while a_db and a.date != b.date: a = a_db.pop(0)
                 else:
                     while b_db and a.date != b.date: b = b_db.pop(0)
-                if h: out.append(h)
-        else:
-            out = out + head + a_db + b_db
-            sorted(out, key=lambda x: x.date)
+
+        if h and a and b and (h.date == a.date and h.date == b.date):
+            if h.text != a.text and h.text == b.text: h.text = a.text
+            elif h.text == a.text and h.text != b.text: h.text = b.text
+            elif h.text != a.text and h.text != b.text:
+                print("Conflict found in "+str(h).splitlines()[0])
+                h.text = a.text + "\n=== TDB_CONFLICT ===\n\n" + b.text
+            out.append(h)
+            continue
+        break
+    
+    out = out + head + a_db + b_db
+    sorted(out, key=lambda x: x.date)
     return "".join([r.entry() for r in out])
 
 
