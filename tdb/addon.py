@@ -70,6 +70,9 @@ def export_cmd(text, args):
             records = tdb.records.split_records(out)
             res = [r.asdict() for r in records]
             print(json.dumps(res, indent=2), file=file)
+        elif path.endswith(".short"):
+            out = "".join([str(r).splitlines()[0]+"\n" for r in records])
+            print(out.strip(), file=file)
         else:
             file.write(out)
     return text

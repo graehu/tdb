@@ -114,8 +114,11 @@ def print_records(options=None):
     if options and options["format"] == "json":
         res = [r.asdict() for r in results]
         print(json.dumps(res, indent=2))
-    if options and options["format"] == "html":
+    elif options and options["format"] == "html":
         tdb.html.print_html(reversed([r.asdict() for r in results]))
+    elif options and options["format"] == "short":
+        out = "".join([str(r).splitlines()[0]+"\n" for r in results])
+        print(out.strip())
     else:
         out = "".join([str(r) for r in results])
         print(out.strip())
