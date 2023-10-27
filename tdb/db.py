@@ -5,7 +5,7 @@ import tdb.config
 _skip_shutdown = True
 _db_file = tdb.config.get("db_file")
 _db_archive = tdb.config.get("db_archive")
-
+_db_merge_func = None
 
 if not _db_file:
     _db_file = tdb.config.get_tdb_dir()
@@ -109,7 +109,7 @@ def perform_inserts():
         _db_inserts = [[i[0], (i[1][0]+delta, i[1][1]+delta)] if i[1][0] >= span[0] else i for i in _db_inserts]
         # print(_db_inserts)
         # print("----------------------------------")
-    
+
     pass
 
 
@@ -117,43 +117,18 @@ def serialise():
     global _db_text
     global _db_inserts
     global _db_mtime
-    
-    db_edits = _db_text if _db_inserts else ""
+
+    db_head = _db_text if _db_inserts else ""
     perform_inserts()
-    db_edits = _db_text if db_edits else ""
+    db_edits = _db_text if db_head else ""
 
     # TODO three way merge will be needed
-    if _db_inserts and _db_mtime != os.path.getmtime(_db_file):
-        import difflib
-        print("edits detected trying to merge")
-        # a_lines = _db_text.splitlines()
-        b_lines = [l[:-1] for l in open(get_filename()).readlines()]
-        c_lines = db_edits.splitlines()
-        
-        # ac_match = difflib.SequenceMatcher(a=a_lines, b=c_lines)
-        # ac_opcodes = ac_match.get_opcodes()
-        bc_match = difflib.SequenceMatcher(a=b_lines, b=c_lines)
-        bc_opcodes = bc_match.get_opcodes()
-
-        output = []
-        for tag, i1, i2, j1, j2 in bc_opcodes:
-            if tag == "equal": output.extend(b_lines[i1:i2])
-            elif tag == "insert": output.extend(c_lines[j1:j2])
-            elif tag == "replace":
-                # todo: this needs to check if these are within the same entry.
-                output.extend(b_lines[i1:i2])
-                output.extend(c_lines[j1:j2])
-
-            elif tag == "delete":
-                # todo: here we need to see if they were inserted by a_lines
-                output.extend(b_lines[i1:i2])
-                pass
-            print('{:7}   a[{}:{}] --> b[{}:{}]'.format(tag, i1, i2, j1, j2))
-        
-        open(get_filename(), "w").write("\n".join(output)+"\n")
+    if _db_mtime != os.path.getmtime(_db_file):
+        output = _db_merge_func(db_head, _db_text, open(get_filename()).read())
+        open(get_filename(), "w").write(output)
     elif db_edits:
         open(get_filename(), "w").write(db_edits)
-    
+
     _db_mtime = os.path.getmtime(_db_file)
 
 

@@ -14,6 +14,7 @@ _record_cmds = []
 _needs_sort = False
 _force_hex = False
 
+
 def convert_headers(text):
     out = text
     while m := re_iso_record.search(out):
@@ -116,6 +117,42 @@ def modify_records(records, text):
     print("Records modified successfully!")
     for r in _record_cmds: r(text)
 
+
+def record_merge(text_head, text_a, text_b):
+    head = split_records(text_head)
+    a_db = split_records(text_a)
+    b_db = split_records(text_b)
+    out = []
+    while head or a_db or b_db:
+        h = head.pop(0) if head else None
+        a = a_db.pop(0) if a_db else None
+        b = b_db.pop(0) if b_db else None
+        # do something so these eventually all reference the same thing?
+        if h and a and b:
+            if h.date == a.date and h.date == b.date: # edit
+                if h.text != a.text and h.text == b.text: h.text = a.text
+                elif h.text == a.text and h.text != b.text: h.text = b.text
+                elif h.text != a.text and h.text != b.text:
+                    print("Conflict found in "+str(h).splitlines()[0])
+                    h.text = a.text + "\n=== TDB_CONFLICT ===\n\n" + b.text
+                out.append(h)
+                continue
+            # TODO this has bugs, the above seems ok though.
+            elif h.date < a.date or h.date < b.date: 
+                while head and h.date != a.date: h = head.pop(0)
+                while head and h.date != b.date: h = head.pop(0)
+                if a.date < b.date:
+                    while a_db and a.date != b.date: a = a_db.pop(0)
+                else:
+                    while b_db and a.date != b.date: b = b_db.pop(0)
+                if h: out.append(h)
+        else:
+            out = out + head + a_db + b_db
+            sorted(out, key=lambda x: x.date)
+    return "".join([r.entry() for r in out])
+
+
+tdb.db._db_merge_func = record_merge
 
 def print_records(options=None):
     results = []
