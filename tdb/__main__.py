@@ -36,10 +36,13 @@ def import_addons():
         module = import_addon(e)
         if module:
             mod_vars = vars(module)
-            if "get_addon_name" in mod_vars and "addon_cmd" in mod_vars:
-                tdb.tags.register_cmd(module.get_addon_name(), module.addon_cmd)
+            if "get_addon_name" in mod_vars:
+                if "addon_tag" in mod_vars:
+                    tdb.tags.register_cmd(module.get_addon_name(), module.addon_tag)
+                if "addon_record" in mod_vars:
+                    tdb.records.register_cmd(module.addon_record)
             else:
-                print("failed to add '"+str(e)+"'. missing expected interface 'get_addon_name' and 'addon_cmd'.")
+                print("failed to add '"+str(e)+"'. missing expected interface 'get_addon_name'.")
 
 
 def main():

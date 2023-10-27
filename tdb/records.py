@@ -10,6 +10,7 @@ import tdb.html
 re_iso_record = re.compile(r'^\[tdb:(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{6})?)\] ?', re.MULTILINE | re.IGNORECASE)
 re_hex_record = re.compile(r'^\[tdb:(0x[\da-f]+)\] ?', re.MULTILINE | re.IGNORECASE)
 _record_cache = []
+_record_cmds = []
 _needs_sort = False
 _force_hex = False
 
@@ -58,6 +59,12 @@ class Record(object):
         return {'text': self.text, 'time': self.time, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span, 'id':self.id }
 
 
+def register_cmd(func):
+    global _record_cmds
+    _record_cmds.append(func)
+    pass
+
+
 def make_record(date, text):
     return f"\n[tdb:{date}] {text}"
 
@@ -72,6 +79,7 @@ def add_record(text):
     tdb.db.append_immediate(record)
 
     print("Record added successfully!")
+    for r in _record_cmds: r(text)
 
 
 def modify_records(records, text):
@@ -106,6 +114,7 @@ def modify_records(records, text):
             pass
     
     print("Records modified successfully!")
+    for r in _record_cmds: r(text)
 
 
 def print_records(options=None):

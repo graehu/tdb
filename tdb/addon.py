@@ -6,9 +6,10 @@ import tdb.html
 
 def get_addon_name(): return "tdb"
 
-def addon_cmd(context, text, args):
+def addon_tag(context, text, args):
     print(context+" : "+str((get_addon_name(), args)))
     try:
+        # TODO this used to be args.lower(), make sure removing that didn't break tags.
         split_args = shlex.split(args)
     except ValueError as e:
         split_args = []
@@ -22,6 +23,8 @@ def addon_cmd(context, text, args):
         text = tdb.tags.replace_tag(text, (get_addon_name(), args), "")
     return text
 
+def addon_record(text):
+    pass
 
 def add_tag_cmd(text, args):
     records = tdb.records.split_records(text)
