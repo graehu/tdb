@@ -122,7 +122,7 @@ def modify_records(records, text):
     for r in _record_cmds: r(text)
 
 
-def record_merge(text_head, text_a, text_b):
+def merge_records(text_head, text_a, text_b):
     head = split_records(text_head)
     a_db = split_records(text_a)
     b_db = split_records(text_b)
@@ -172,7 +172,7 @@ def record_merge(text_head, text_a, text_b):
     return "".join([r.entry() for r in out])
 
 
-tdb.db._db_merge_func = record_merge
+tdb.db._db_merge_func = merge_records
 
 def print_records(options=None):
     results = []
