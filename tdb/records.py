@@ -86,6 +86,7 @@ def add_record(text):
 def modify_records(records, text):
     new_records = split_records(text)
     found = []
+    mods = adds = dels = 0
     for r1 in new_records:
         modified = None
         new = True
@@ -101,20 +102,23 @@ def modify_records(records, text):
                 break
         
         if modified:
-            tdb.db.replace(r2.entry(), r1.entry())
+            tdb.db.replace(r2.entry(), r1.entry()); adds += 1
         elif new:
             # print(f"new: {r1}")
             # for r2 in records:
             #     print((r1.iso_str()," != ",r2.iso_str()))
-            tdb.db.append(r1.entry())
+            tdb.db.append(r1.entry()); mods+=1
             pass
     for r1 in records:
         if not r1 in found:
             # print(f"del: {r1}")
-            tdb.db.archive(r1.entry())
+            tdb.db.archive(r1.entry()); dels+=1
             pass
     
-    print("Records modified successfully!")
+    if adds: print(f"Inserted {adds} record{'s' if adds > 1 else ''}.")
+    if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
+    if dels: print(f"Archived {dels} record{'s' if dels > 1 else ''}.")
+    
     for r in _record_cmds: r(text)
 
 
