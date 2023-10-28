@@ -126,6 +126,13 @@ def record_merge(text_head, text_a, text_b):
     head = split_records(text_head)
     a_db = split_records(text_a)
     b_db = split_records(text_b)
+    def handle_conflict(in_record):
+        if not tdb.db._db_has_conflicts:
+            print("Warning: conflict in ")
+            tdb.db._db_has_conflicts = True
+        print("\t"+str(in_record).splitlines()[0])
+        in_record.text += "\n@tdb_conflict\n\n"
+        
     out = []
     while head or a_db or b_db:
         h = head.pop(0) if head else None
@@ -133,8 +140,16 @@ def record_merge(text_head, text_a, text_b):
         b = b_db.pop(0) if b_db else None
         # do something so these eventually all reference the same thing?
         if h and a and b and (h.date < a.date or h.date < b.date): 
-            while head and h.date != a.date: h = head.pop(0)
-            while head and h.date != b.date: h = head.pop(0)
+            while head and h.date < a.date or h.date < b.date:
+                if h.date == a.date and h.text != a.text: # change
+                    handle_conflict(a)
+                    out.append(a)
+                elif h.date == b.date and h.text != b.text: # change
+                    handle_conflict(b)
+                    out.append(b)
+
+                h = head.pop(0)
+
             if a.date < b.date:
                 while a_db and a.date != b.date: a = a_db.pop(0)
             else:
@@ -144,11 +159,10 @@ def record_merge(text_head, text_a, text_b):
             if h.text != a.text and h.text == b.text: h.text = a.text
             elif h.text == a.text and h.text != b.text: h.text = b.text
             elif h.text != a.text and h.text != b.text:
-                print("Conflict found in: \n\t"+str(h).splitlines()[0])
                 import difflib
                 diff = difflib.Differ().compare(a.text.splitlines(keepends=True), b.text.splitlines(keepends=True))
-                h.text = "".join([l[2:] for l in list(diff)])+"\n@tdb_conflict\n\n"
-                tdb.db._db_has_conflicts = True
+                h.text = "".join([l[2:] for l in list(diff)])
+                handle_conflict(h)
             out.append(h)
             continue
         break

@@ -118,6 +118,7 @@ def serialise():
     global _db_text
     global _db_inserts
     global _db_mtime
+    global _db_has_conflicts
 
     db_head = _db_text if _db_inserts else ""
     perform_inserts()
@@ -129,8 +130,8 @@ def serialise():
             print("@tdb_conflict has been added to affected records.")
     elif db_head:
         open(get_filename(), "w").write(_db_text)
-
     _db_mtime = os.path.getmtime(_db_file)
+    _db_has_conflicts = False
 
 
 @atexit.register
