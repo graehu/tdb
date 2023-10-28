@@ -6,6 +6,7 @@ _skip_shutdown = True
 _db_file = tdb.config.get("db_file")
 _db_archive = tdb.config.get("db_archive")
 _db_merge_func = None
+_db_has_conflicts = False
 
 if not _db_file:
     _db_file = tdb.config.get_tdb_dir()
@@ -126,6 +127,8 @@ def serialise():
     if _db_mtime != os.path.getmtime(_db_file):
         output = _db_merge_func(db_head, _db_text, open(get_filename()).read())
         open(get_filename(), "w").write(output)
+        if _db_has_conflicts:
+            print("@tdb_conflict has been added to affected records.")
     elif db_edits:
         open(get_filename(), "w").write(db_edits)
 

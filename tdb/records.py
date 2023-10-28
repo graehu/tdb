@@ -102,12 +102,12 @@ def modify_records(records, text):
                 break
         
         if modified:
-            tdb.db.replace(r2.entry(), r1.entry()); adds += 1
+            tdb.db.replace(r2.entry(), r1.entry()); mods += 1
         elif new:
             # print(f"new: {r1}")
             # for r2 in records:
             #     print((r1.iso_str()," != ",r2.iso_str()))
-            tdb.db.append(r1.entry()); mods+=1
+            tdb.db.append(r1.entry()); adds+=1
             pass
     for r1 in records:
         if not r1 in found:
@@ -133,19 +133,22 @@ def record_merge(text_head, text_a, text_b):
         b = b_db.pop(0) if b_db else None
         # do something so these eventually all reference the same thing?
         if h and a and b and (h.date < a.date or h.date < b.date): 
-                while head and h.date != a.date: h = head.pop(0)
-                while head and h.date != b.date: h = head.pop(0)
-                if a.date < b.date:
-                    while a_db and a.date != b.date: a = a_db.pop(0)
-                else:
-                    while b_db and a.date != b.date: b = b_db.pop(0)
+            while head and h.date != a.date: h = head.pop(0)
+            while head and h.date != b.date: h = head.pop(0)
+            if a.date < b.date:
+                while a_db and a.date != b.date: a = a_db.pop(0)
+            else:
+                while b_db and a.date != b.date: b = b_db.pop(0)
 
         if h and a and b and (h.date == a.date and h.date == b.date):
             if h.text != a.text and h.text == b.text: h.text = a.text
             elif h.text == a.text and h.text != b.text: h.text = b.text
             elif h.text != a.text and h.text != b.text:
-                print("Conflict found in "+str(h).splitlines()[0])
-                h.text = a.text + "\n=== TDB_CONFLICT ===\n\n" + b.text
+                print("Conflict found in: \n\t"+str(h).splitlines()[0])
+                import difflib
+                diff = difflib.Differ().compare(a.text.splitlines(keepends=True), b.text.splitlines(keepends=True))
+                h.text = "".join([l[2:] for l in list(diff)])+"\n@tdb_conflict\n\n"
+                tdb.db._db_has_conflicts = True
             out.append(h)
             continue
         break
