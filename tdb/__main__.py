@@ -77,12 +77,17 @@ def main():
         if any(options.values()):
             records = tdb.records.split_db_records(options)
             content = "".join([str(r) for r in records])
-            text = tdb.session.start("tdb_edit", content, ext=edit_ext)
+            
+            def update_db(text):
+                tdb.records.modify_db_records(text)
+                tdb.db.serialise()
+
+            text = tdb.session.start("tdb_edit", content, ext=edit_ext, update_cb=update_db)
             if content == text:
                 print("no changes made")
                 return
             else:
-                tdb.records.modify_records(records, text)
+                update_db(text)
         else:
             tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
 
@@ -95,7 +100,6 @@ def main():
             if not ext: ext = edit_ext
             content = open(template).read()
             text = tdb.session.start("tdb_edit", content, ext)
-            
             if content == text:
                 print("no changes made")
                 return

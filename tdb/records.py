@@ -6,6 +6,7 @@ import tdb.db
 import tdb.tags
 import tdb.rake
 import tdb.html
+import tdb.cli
 # This is the format: "2023-04-05 09:59:33"
 re_iso_record = re.compile(r'^\[tdb:(\d{4}\-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{6})?)\] ?', re.MULTILINE | re.IGNORECASE)
 re_hex_record = re.compile(r'^\[tdb:(0x[\da-f]+)\] ?', re.MULTILINE | re.IGNORECASE)
@@ -13,6 +14,7 @@ _record_cache = []
 _record_cmds = []
 _needs_sort = False
 _force_hex = False
+_record_mtime = 0
 
 
 def convert_headers(text):
@@ -83,8 +85,18 @@ def add_record(text):
     for r in _record_cmds: r(text)
 
 
-def modify_records(records, text):
+def modify_db_records(text):
+    options = tdb.cli.parse_options()
+    records = split_db_records(options)
     new_records = split_records(text)
+    dedupe = []
+    for r1 in new_records:
+        new = True
+        for r2 in dedupe:
+            if r1.date == r2.date: new = False; break
+        if new: dedupe.append(r1)
+    if len(new_records) != len(dedupe): print("Warning: duplicate dates found. Ignoring those entries.")
+    new_records = dedupe
     found = []
     mods = adds = dels = 0
     for r1 in new_records:
@@ -115,6 +127,7 @@ def modify_records(records, text):
             tdb.db.archive(r1.entry()); dels+=1
             pass
     
+    if adds or mods or dels: print("".ljust(32, "="))
     if adds: print(f"Inserted {adds} record{'s' if adds > 1 else ''}.")
     if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
     if dels: print(f"Archived {dels} record{'s' if dels > 1 else ''}.")
@@ -267,7 +280,10 @@ def sort_records():
 def split_db_records(options=None):
     global _record_cache
     global _needs_sort
-    if not _record_cache: _record_cache = split_records(tdb.db.get_text())
+    global _record_mtime
+    if tdb.db._db_mtime != _record_mtime:
+        _record_cache = split_records(tdb.db.get_text())
+        _record_mtime = tdb.db._db_mtime
     if _needs_sort: sort_records()
     if options: return filter_records(_record_cache, options)
     else: return _record_cache

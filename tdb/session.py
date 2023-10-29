@@ -4,8 +4,8 @@ import tempfile
 import tdb.cli
 import tdb.tags
 import tdb.config
-
-def start(name, content="", ext=".txt"):
+            
+def start(name, content="", ext=".txt", update_cb=None):
     name += "-"
     temp_file = tempfile.NamedTemporaryFile(mode="w+", prefix=name, suffix=ext, delete=False)
     temp_file.write(content)
@@ -20,6 +20,7 @@ def start(name, content="", ext=".txt"):
             text = tdb.tags.parse_cmds("update", text)
             open(temp_file.name, "w").write(text)
             modtime = os.path.getmtime(temp_file.name)
+            if update_cb: update_cb(text)
         time.sleep(0.1)
     
     text = ""
