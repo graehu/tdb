@@ -86,8 +86,7 @@ def add_record(text):
 
 
 def modify_db_records(text):
-    options = tdb.cli.parse_options()
-    records = split_db_records(options)
+    records = split_db_records()
     new_records = split_records(text)
     dedupe = []
     for r1 in new_records:
@@ -267,7 +266,7 @@ def filter_records(records, options):
     return out
 
 
-def sort_records():
+def sort_db_records():
     global _record_cache
     global _needs_sort
     print("warning: db unordered, attempting sort.")
@@ -284,7 +283,7 @@ def split_db_records(options=None):
     if tdb.db._db_mtime != _record_mtime:
         _record_cache = split_records(tdb.db.get_text())
         _record_mtime = tdb.db._db_mtime
-    if _needs_sort: sort_records()
+    if _needs_sort: sort_db_records()
     if options: return filter_records(_record_cache, options)
     else: return _record_cache
 
