@@ -86,7 +86,8 @@ def add_record(text):
 
 
 def modify_db_records(text):
-    records = split_db_records()
+    options = tdb.cli.parse_options()
+    records = split_db_records(options)
     new_records = split_records(text)
     dedupe = []
     for r1 in new_records:
