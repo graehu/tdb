@@ -20,7 +20,9 @@ def start(name, content="", ext=".txt", update_cb=None):
             text = tdb.tags.parse_cmds("update", text)
             open(temp_file.name, "w").write(text)
             modtime = os.path.getmtime(temp_file.name)
-            if update_cb: update_cb(text)
+            if update_cb:
+                update_cb(content, text)
+                content = text
         time.sleep(0.1)
     
     text = ""

@@ -16,12 +16,27 @@ _needs_sort = False
 _force_hex = False
 _record_mtime = 0
 
+def convert_db_nano_to_micro():
+    return
+    text = tdb.db.get_text()
+    for match in re_hex_record.finditer(text):
+        nano = int(match.group(1), 16)
+        if int(nano/1E9) > 1E9:
+            before = make_record(nano, "")
+            nano = int(nano/1E3)
+            after = make_record(nano, "")
+            text.replace(before, after, 1)
+            print("doot")
+        
+    open(tdb.db.get_filename(), "w").write(text)
+    
+                
 
 def convert_headers(text):
     out = text
     while m := re_iso_record.search(out):
         d = datetime.fromisoformat(m.group(1))
-        d = hex(int(d.timestamp()*1E9))
+        d = hex(int(d.timestamp()*1E6))
         out = out[:m.span(1)[0]]+d+out[m.span(1)[1]:]
     return out
 
@@ -56,7 +71,8 @@ class Record(object):
 
     def iso_str(self): return self.date.isoformat(' ')
 
-    def entry(self): return f"[tdb:{hex(self.time)}] {self.text}"
+    def entry(self):
+        return f"[tdb:{hex(self.time)}] {self.text}"
     
     def asdict(self):
         return {'text': self.text, 'time': self.time, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span, 'id':self.id }
@@ -75,9 +91,11 @@ def make_record(date, text):
 def add_record(text):
     dt = tdb.db.get_mtime()
     ns = time.time_ns()
-    
-    if (ns/1E9) - dt > 1.0: ns = int(int(ns/1E9)*1E9)
-    
+    # convert to microseconds for datetime compliance
+    ns = int(ns/1E3)
+
+    if (ns/1E6) - dt > 1.0: ns = int(int(ns/1E6)*1E6)
+    # if (ns/1E9) - dt > 1.0: ns = int(int(ns/1E9)*1E9)
     record = make_record(hex(ns), text)
     tdb.db.append_immediate(record)
 
@@ -85,10 +103,9 @@ def add_record(text):
     for r in _record_cmds: r(text)
 
 
-def modify_db_records(text):
-    options = tdb.cli.parse_options()
-    records = split_db_records(options)
-    new_records = split_records(text)
+def modify_db_records(previous, current):
+    records = split_records(previous)
+    new_records = split_records(current)
     dedupe = []
     for r1 in new_records:
         new = True
@@ -132,7 +149,7 @@ def modify_db_records(text):
     if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
     if dels: print(f"Archived {dels} record{'s' if dels > 1 else ''}.")
     
-    for r in _record_cmds: r(text)
+    for r in _record_cmds: r(current)
 
 
 def merge_records(text_head, text_a, text_b):
@@ -352,10 +369,13 @@ def split_records(text: str, options=None):
 
     for match in re_hex_record.finditer(text):
         nano = int(match.group(1), 16)
+        
+        if int(nano/1E9) > 1E9:
+            nano = int(nano/1E3)
         delta = 0
         if last: delta = nano - last["time"]
         current = {
-            "date": datetime.fromtimestamp(nano/1E9),
+            "date": datetime.fromtimestamp(nano/1E6),
             "time": nano,
             "delta": delta,
             "text": "",

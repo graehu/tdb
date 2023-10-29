@@ -52,7 +52,6 @@ def main():
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
     edit_ext = tdb.config.get('edit_ext')
-
     if command == "add":
         import_addons()
         text = tdb.cli.get_text()
@@ -77,9 +76,11 @@ def main():
         if any(options.values()):
             records = tdb.records.split_db_records(options)
             content = "".join([str(r) for r in records])
-            
-            def update_db(text):
-                tdb.records.modify_db_records(text)
+
+            def update_db(previous, text):
+                nonlocal content
+                tdb.records.modify_db_records(previous, text)
+                content = text
                 tdb.db.serialise()
 
             text = tdb.session.start("tdb_edit", content, ext=edit_ext, update_cb=update_db)
@@ -87,7 +88,7 @@ def main():
                 print("no changes made")
                 return
             else:
-                update_db(text)
+                update_db(content, text)
         else:
             tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
 
