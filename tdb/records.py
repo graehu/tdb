@@ -17,20 +17,19 @@ _force_hex = False
 _record_mtime = 0
 
 def convert_db_nano_to_micro():
-    return
-    text = tdb.db.get_text()
+    return # don't call this code atm.
+    file_name = tdb.db.get_filename()
+    text = open(file_name, "r").read()
     for match in re_hex_record.finditer(text):
         nano = int(match.group(1), 16)
         if int(nano/1E9) > 1E9:
-            before = make_record(nano, "")
+            before = f"[tdb:{(hex(nano))}]"
             nano = int(nano/1E3)
-            after = make_record(nano, "")
-            text.replace(before, after, 1)
-            print("doot")
-        
-    open(tdb.db.get_filename(), "w").write(text)
+            after = f"[tdb:{(hex(nano))}]"
+            print(f"before: {before}\nafter: {after}")
+            text = text.replace(before, after, 1)
+    open(file_name, "w").write(text)
     
-                
 
 def convert_headers(text):
     out = text
@@ -103,15 +102,20 @@ def add_record(text):
     for r in _record_cmds: r(text)
 
 
-def modify_db_records(previous, current):
-    records = split_records(previous)
-    new_records = split_records(current)
+def deduplicate_records(in_records):
     dedupe = []
-    for r1 in new_records:
+    for r1 in in_records:
         new = True
         for r2 in dedupe:
             if r1.date == r2.date: new = False; break
         if new: dedupe.append(r1)
+    return dedupe
+
+
+def modify_db_records(previous, current):
+    records = split_records(previous)
+    new_records = split_records(current)
+    dedupe = deduplicate_records(new_records)
     if len(new_records) != len(dedupe): print("Warning: duplicate dates found. Ignoring those entries.")
     new_records = dedupe
     found = []
@@ -168,6 +172,9 @@ def merge_records(text_head, text_a, text_b):
         h = head.pop(0) if head else None
         a = a_db.pop(0) if a_db else None
         b = b_db.pop(0) if b_db else None
+        # if h: print("h:"+h.entry().splitlines()[0])
+        # if a: print("a:"+a.entry().splitlines()[0])
+        # if b: print("b:"+b.entry().splitlines()[0])
         # do something so these eventually all reference the same thing?
         if h and a and b and (h.date < a.date or h.date < b.date): 
             while head and h.date < a.date or h.date < b.date:
@@ -195,11 +202,18 @@ def merge_records(text_head, text_a, text_b):
                 handle_conflict(h)
             out.append(h)
             continue
+        # don't lose this record
+        if a: a_db.append(a)
+        if b: b_db.append(b)
+        if h: head.append(h)
         break
     
     out = out + head + a_db + b_db
+    out = deduplicate_records(out)
     sorted(out, key=lambda x: x.date)
-    return "".join([r.entry() for r in out])
+    out = "".join([r.entry() for r in out])
+    # print(len(out.splitlines()))
+    return out
 
 
 tdb.db._db_merge_func = merge_records

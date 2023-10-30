@@ -79,16 +79,18 @@ def main():
 
             def update_db(previous, text):
                 nonlocal content
-                tdb.records.modify_db_records(previous, text)
-                content = text
-                tdb.db.serialise()
+                return
+                # tdb.records.modify_db_records(previous, text)
+                # content = text
+                # tdb.db.serialise()
 
             text = tdb.session.start("tdb_edit", content, ext=edit_ext, update_cb=update_db)
             if content == text:
                 print("no changes made")
                 return
             else:
-                update_db(content, text)
+                # update_db(content, text)
+                tdb.records.modify_db_records(content, text)
         else:
             tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
 

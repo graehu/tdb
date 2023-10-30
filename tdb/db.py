@@ -123,7 +123,7 @@ def serialise():
     db_head = _db_text if _db_inserts else ""
     perform_inserts()
 
-    if _db_mtime != os.path.getmtime(_db_file):
+    if db_head and _db_mtime != os.path.getmtime(_db_file):
         output = _db_merge_func(db_head, _db_text, open(get_filename()).read())
         open(get_filename(), "w").write(output)
         if _db_has_conflicts:
