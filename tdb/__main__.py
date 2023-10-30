@@ -83,7 +83,7 @@ def main():
                 update_called = True
                 tdb.records.modify_db_records(previous, text)
                 tdb.db.serialise()
-                dates = [r.date for r in tdb.records.split_records(content)]
+                dates = [r.date for r in tdb.records.split_records(text)]
                 text = "".join([str(r) for r in tdb.records.split_db_records() if r.date in dates])
                 content = text
                 return text
