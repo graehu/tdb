@@ -18,11 +18,11 @@ def start(name, content="", ext=".txt", update_cb=None):
             modtime = os.path.getmtime(temp_file.name)
             text = open(temp_file.name).read()
             text = tdb.tags.parse_cmds("update", text)
+            if update_cb:
+                text = update_cb(content, text)
+                content = text
             open(temp_file.name, "w").write(text)
             modtime = os.path.getmtime(temp_file.name)
-            if update_cb:
-                update_cb(content, text)
-                content = text
         time.sleep(0.1)
     
     text = ""

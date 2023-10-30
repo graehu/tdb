@@ -82,8 +82,11 @@ def main():
                 nonlocal update_called
                 update_called = True
                 tdb.records.modify_db_records(previous, text)
-                content = text
                 tdb.db.serialise()
+                dates = [r.date for r in tdb.records.split_records(content)]
+                text = "".join([str(r) for r in tdb.records.split_db_records() if r.date in dates])
+                content = text
+                return text
 
             text = tdb.session.start("tdb_edit", content, ext=edit_ext, update_cb=update_db)
             if not update_called:
