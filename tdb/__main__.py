@@ -76,21 +76,21 @@ def main():
         if any(options.values()):
             records = tdb.records.split_db_records(options)
             content = "".join([str(r) for r in records])
-
+            update_called = False
             def update_db(previous, text):
                 nonlocal content
-                return
-                # tdb.records.modify_db_records(previous, text)
-                # content = text
-                # tdb.db.serialise()
+                nonlocal update_called
+                update_called = True
+                tdb.records.modify_db_records(previous, text)
+                content = text
+                tdb.db.serialise()
 
             text = tdb.session.start("tdb_edit", content, ext=edit_ext, update_cb=update_db)
-            if content == text:
+            if not update_called:
                 print("no changes made")
                 return
-            else:
-                # update_db(content, text)
-                tdb.records.modify_db_records(content, text)
+            elif content != text:
+                update_db(content, text) # this should never happen.
         else:
             tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
 
@@ -106,7 +106,6 @@ def main():
             if content == text:
                 print("no changes made")
                 return
-
             if text:
                 tdb.records.add_record(text)
             else:

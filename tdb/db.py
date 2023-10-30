@@ -126,6 +126,7 @@ def serialise():
     if db_head and _db_mtime != os.path.getmtime(_db_file):
         output = _db_merge_func(db_head, _db_text, open(get_filename()).read())
         open(get_filename(), "w").write(output)
+        _db_text = output
         if _db_has_conflicts:
             print("@tdb_conflict has been added to affected records.")
     elif db_head:
