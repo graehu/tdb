@@ -12,7 +12,6 @@ def get_text():
 
 
 def get_command(override = ""):
-    print(override)
     if override: return shlex.split(override)[0]
     return sys.argv[1]
 
