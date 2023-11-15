@@ -67,10 +67,15 @@ def export_cmd(text, args):
     out = "\n".join([l for l in text.splitlines() if not l.startswith("@tdb")])
     with open(path, "w+") as file:
         if path.endswith(".html"):
-            records = tdb.records.split_records(out)
+            #TODO this will allow multiple records with the same path to export together.
+            #     however, this code runs for each export line, which is not performant.
+            #     need a way to dedupe tag commands in some cases.
+            records = [r for r in tdb.records.split_records(text) if path in r.text]
+            for r in records: r.text = "\n".join([l for l in r.text.splitlines() if not l.startswith("@tdb")])
             tdb.html.print_html(reversed([r.asdict() for r in records]), file)
         elif path.endswith(".json"):
-            records = tdb.records.split_records(out)
+            records = [r for r in tdb.records.split_records(text) if path in r.text]
+            for r in records: r.text = "\n".join([l for l in r.text.splitlines() if not l.startswith("@tdb")])
             res = [r.asdict() for r in records]
             print(json.dumps(res, indent=2), file=file)
         elif path.endswith(".short"):
