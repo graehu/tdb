@@ -88,7 +88,7 @@ def main():
                 content = text
                 return text
 
-            text = tdb.session.start("tdb_edit", content, ext=edit_ext, update_cb=update_db)
+            text = tdb.session.start("tdb_"+tdb.cli.get_safe_filename(), content, ext=edit_ext, update_cb=update_db)
             if not update_called:
                 print("no changes made")
                 return
@@ -105,7 +105,7 @@ def main():
             basename = os.path.basename(basename)
             if not ext: ext = edit_ext
             content = open(template).read()
-            text = tdb.session.start("tdb_edit", content, ext)
+            text = tdb.session.start("tdb_"+basename, content, ext)
             if content == text:
                 print("no changes made")
                 return
