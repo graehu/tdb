@@ -97,6 +97,7 @@ def add_record(text):
     # if (ns/1E9) - dt > 1.0: ns = int(int(ns/1E9)*1E9)
     record = make_record(hex(ns), text)
     tdb.db.append_immediate(record)
+    tdb.db.archive(record, False)
 
     print("Record added successfully!")
     for r in _record_cmds: r(text)

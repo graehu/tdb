@@ -81,9 +81,9 @@ def replace(old, new):
     if id != -1:
         insert(new, id, id+len(old))
 
-def archive(text):
+def archive(text, remove=True):
     open(get_archive(), "a").write(text)
-    replace(text, "")
+    if remove: replace(text, "")
 
 
 def insert(text, start, end):
