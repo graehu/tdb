@@ -15,6 +15,18 @@ def get_command(override = ""):
     if override: return shlex.split(override)[0]
     return sys.argv[1]
 
+def print_options():
+    print("Options:")
+    print("span: ".ljust(16)+"The records to select, example: span:7d is the last 7 days.")
+    print("format: ".ljust(16)+"The format to see the records in. Only valid for show currently. [html, json, short]")
+    print("@{tag}: ".ljust(16)+"This tag or any others must be included, example: @notes @school, records must have either.")
+    print("+@{tag}: ".ljust(16)+"This tag and any others must be included. i.e. +@notes +@school, records must have both.")
+    print("-@{tag}: ".ljust(16)+"This tag must not be included. i.e. -@notes @school, records for school, no notes.")
+    print("{text}: ".ljust(16)+"This text is optional.")
+    print("+{text}: ".ljust(16)+"This text must be included.")
+    print("-{text}: ".ljust(16)+"This text must not be included")
+    print("\nNote, text must be quoted if there are spaces.")
+
 
 def parse_options(override = ""):
     if override: splits = shlex.split(override)[1:]

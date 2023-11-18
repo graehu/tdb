@@ -47,7 +47,18 @@ def import_addons():
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: py -m tdb [add | show | config | edit | archive | template ] [text | options]")
+        print("# tdb\n\nA text based database with tagging.\n\n```")
+        print("Usage: py -m tdb [add | edit | template | show | config | archive] [text | options]")
+        print("".ljust(64,"-"))
+        print("Commands:")
+        print("add:".ljust(16)+"Make a record when text is supplied. Otherwise, open an editor to write one.")
+        print("edit:".ljust(16)+"Open an editor with some view of the database, see options.")
+        print("template:".ljust(16)+"Open an editor to write a record with the passed template file as a basis.")
+        print("config:".ljust(16)+"Open tdbs config file.")
+        print("archive:".ljust(16)+"Open tdbs archive. Check here if you lose a record.")
+        print("".ljust(64,"-"))
+        tdb.cli.print_options()
+        print("```")
         sys.exit(1)
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
