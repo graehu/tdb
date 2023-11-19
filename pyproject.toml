@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tdb"
+name = "pypi-tdb"
 version = "0.0.1"
 authors = [
   { name="Graham Hughes", email="graehu@gmail.com" },
