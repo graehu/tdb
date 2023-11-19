@@ -63,6 +63,7 @@ def main():
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
     edit_ext = tdb.config.get('edit_ext')
+    edit_ext = edit_ext if edit_ext else ".txt"
     if command == "add":
         import_addons()
         text = tdb.cli.get_text()
