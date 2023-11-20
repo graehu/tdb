@@ -1,4 +1,5 @@
 import os
+import platform
 import time
 import tempfile
 import tdb.cli
@@ -51,5 +52,4 @@ def signal_term_handler(signal, frame):
     sys.exit(1)
  
 signal.signal(signal.SIGTERM, signal_term_handler)
-signal.signal(signal.SIGQUIT, signal_term_handler)
-# signal.signal(signal.SIGKILL, signal_term_handler) #TODO: maybe this works on windows?
+if platform.system() == "Linux": signal.signal(signal.SIGQUIT, signal_term_handler)
