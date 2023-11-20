@@ -1,11 +1,12 @@
 import sys
 import os
+import toml
+import tdb.db
+import tdb.cli
 import tdb.tags
+import tdb.config
 import tdb.records
 import tdb.session
-import tdb.config
-import tdb.cli
-import tdb.db
 import importlib.util
 
 _dirname = os.path.dirname(__file__)
@@ -46,7 +47,7 @@ def import_addons():
 
 
 def main():
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or "--help" in sys.argv:
         print("# tdb\n\nA text based database with tagging.\n\n```")
         print("Usage: py -m tdb [add | edit | template | show | config | archive] [text | options]")
         print("".ljust(64,"-"))
@@ -59,7 +60,11 @@ def main():
         print("".ljust(64,"-"))
         tdb.cli.print_options()
         print("```")
-        sys.exit(1)
+        sys.exit(0)
+    if "--version" in sys.argv:
+        dir = os.path.dirname(__file__)
+        print(toml.load(dir+"/../pyproject.toml")["project"]["version"])
+        sys.exit(0)
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
     edit_ext = tdb.config.get('edit_ext')
