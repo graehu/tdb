@@ -98,6 +98,7 @@ def main():
                 nonlocal content
                 nonlocal update_called
                 update_called = True
+                if not text or text[-1] != "\n": text += "\n"
                 tdb.records.modify_db_records(previous, text)
                 tdb.db.serialise()
                 dates = [r.date for r in tdb.records.split_records(text)]
