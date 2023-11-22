@@ -41,7 +41,8 @@ entry = """
     <div class="entry_spacer"></div>
 """
 
-def print_html(entries, file=None):
+def build_html(entries):
+
     entries_str = ""
     for in_entry in entries:
         if "markdown" in sys.modules:
@@ -52,4 +53,8 @@ def print_html(entries, file=None):
         else:
             in_entry["text"] = "<pre>"+in_entry["text"]+"</pre>"
         entries_str += entry.format_map(in_entry)
-    print(body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str}), file=file)
+
+    return body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str})
+
+def print_html(entries, file=None):
+    print(build_html(entries), file=file)

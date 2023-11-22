@@ -7,6 +7,7 @@ import tdb.tags
 import tdb.config
 import tdb.records
 import tdb.session
+import tdb.server
 import importlib.util
 
 _dirname = os.path.dirname(__file__)
@@ -49,7 +50,7 @@ def import_addons():
 def main():
     if len(sys.argv) < 2 or "--help" in sys.argv:
         print("# tdb\n\nA text based database with tagging.\n\n```")
-        print("Usage: py -m tdb [add | edit | template | show | config | archive] [text | options]")
+        print("Usage: py -m tdb [add | edit | template | show | config | archive | listen] [text | options]")
         print("".ljust(64,"-"))
         print("Commands:")
         print("add:".ljust(16)+"Make a record when text is supplied. Otherwise, open an editor to write one.")
@@ -57,6 +58,7 @@ def main():
         print("template:".ljust(16)+"Open an editor to write a record with the passed template file as a basis.")
         print("config:".ljust(16)+"Open tdbs config file.")
         print("archive:".ljust(16)+"Open tdbs archive. Check here if you lose a record.")
+        print("listen:".ljust(16)+"Starts a sever listening on passed port.")
         print("".ljust(64,"-"))
         tdb.cli.print_options()
         print("```")
@@ -133,7 +135,11 @@ def main():
                 print("No text provided. Record not added.")
         else:
             print(f"'{template}' is not a valid file")
-
+    elif command == "listen":
+        port = 8000
+        try: port = int(options["ocontains"][0])
+        except Exception as e: pass 
+        tdb.server.start_server(port)
     else:
         print("Invalid command. Try again.")
         sys.exit(1)

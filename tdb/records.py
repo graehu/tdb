@@ -219,20 +219,27 @@ def merge_records(text_head, text_a, text_b):
 
 tdb.db._db_merge_func = merge_records
 
-def print_records(options=None):
+def stringify_records(options=None):
     results = []
     results = split_db_records(options)
+    out = ""
     if options and options["format"] == "json":
         res = [r.asdict() for r in results]
-        print(json.dumps(res, indent=2))
+        out = json.dumps(res, indent=2)
     elif options and options["format"] == "html":
-        tdb.html.print_html(reversed([r.asdict() for r in results]))
+        out = tdb.html.build_html(reversed([r.asdict() for r in results]))
     elif options and options["format"] == "short":
         out = "".join([str(r).splitlines()[0]+"\n" for r in results])
+        out = out.strip()
         print(out.strip())
     else:
         out = "".join([str(r) for r in results])
-        print(out.strip())
+        out = out.strip()
+    return out
+
+
+def print_records(options=None):
+    print(stringify_records(options))
 
 
 def filter_records(records, options):
