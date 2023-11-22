@@ -63,7 +63,7 @@ def main():
         sys.exit(0)
     if "--version" in sys.argv:
         dir = os.path.dirname(__file__)
-        print(tomllib.load(dir+"/../pyproject.toml")["project"]["version"])
+        print(tomllib.load(open(dir+"/../pyproject.toml", "rb"))["project"]["version"])
         sys.exit(0)
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
