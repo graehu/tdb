@@ -1,6 +1,6 @@
 import sys
 import os
-import toml
+import tomllib
 import tdb.db
 import tdb.cli
 import tdb.tags
@@ -63,7 +63,7 @@ def main():
         sys.exit(0)
     if "--version" in sys.argv:
         dir = os.path.dirname(__file__)
-        print(toml.load(dir+"/../pyproject.toml")["project"]["version"])
+        print(tomllib.load(dir+"/../pyproject.toml")["project"]["version"])
         sys.exit(0)
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
