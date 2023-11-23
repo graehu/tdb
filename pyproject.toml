@@ -23,6 +23,7 @@ classifiers = [
 
 [tool.hatch.build]
 include = [
+  "pyproject.toml",
   "**/*.py",
   "tdb/style.css"
 ]

@@ -58,7 +58,7 @@ def main():
         print("template:".ljust(16)+"Open an editor to write a record with the passed template file as a basis.")
         print("config:".ljust(16)+"Open tdbs config file.")
         print("archive:".ljust(16)+"Open tdbs archive. Check here if you lose a record.")
-        print("listen:".ljust(16)+"Starts a sever listening on passed port.")
+        print("listen:".ljust(16)+"Starts a server listening on passed port.")
         print("".ljust(64,"-"))
         tdb.cli.print_options()
         print("```")
