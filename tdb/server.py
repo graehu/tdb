@@ -5,6 +5,7 @@ import contextlib
 import threading
 import json
 import socket
+import urllib.parse
 
 
 db_lock = threading.Lock()
@@ -25,16 +26,17 @@ class TdbServer(SimpleHTTPRequestHandler):
                 query_list = query_list.split("&")
             else:
                 query_list = [query_list]
-
+        
         # put the queries into a dict        
         if query_list:
             queries = {}
             for q in query_list:
                 k, v = q.split("=")
                 queries[k] = v
-            options = "server "
-            for k,v in queries.items(): options += f"{k}:{v} "
+            
+            options = ("web "+urllib.parse.unquote(queries["opts"])) if "opts" in queries else ""
             options = tdb.cli.parse_options(options)
+            print("parsed options: "+str(options))
             response = {"ok": False}
             headers = {}
             headers["Content-Type"] = "text/json"
