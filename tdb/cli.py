@@ -97,7 +97,7 @@ def parse_span(args):
 
 
 def get_safe_filename():
-    return "".join([c for c in "_".join(sys.argv[1:]) if c.isalpha() or c.isdigit() or c in ['_']]).rstrip()
+    return "".join([c for c in "_".join(sys.argv[1:]) if c.isalpha() or c.isdigit() or c in ['_', '-', "+"]]).rstrip()
 
 
 def run(text):
