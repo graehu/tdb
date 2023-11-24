@@ -228,6 +228,8 @@ def stringify_records(options=None):
         out = json.dumps(res, indent=2)
     elif options and options["format"] == "html":
         out = tdb.html.build_html(reversed([r.asdict() for r in results]))
+    elif options and options["format"] == "html_entries":
+        out = tdb.html.build_html_entries(reversed([r.asdict() for r in results]))
     elif options and options["format"] == "short":
         out = "".join([str(r).splitlines()[0]+"\n" for r in results])
         out = out.strip()

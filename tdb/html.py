@@ -42,7 +42,11 @@ entry = """
 """
 
 def build_html(entries):
+    entries_str = build_html_entries(entries)
+    return body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str})
 
+
+def build_html_entries(entries):
     entries_str = ""
     for in_entry in entries:
         if "markdown" in sys.modules:
@@ -53,8 +57,8 @@ def build_html(entries):
         else:
             in_entry["text"] = "<pre>"+in_entry["text"]+"</pre>"
         entries_str += entry.format_map(in_entry)
+    return entries_str
 
-    return body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str})
 
 def print_html(entries, file=None):
     print(build_html(entries), file=file)
