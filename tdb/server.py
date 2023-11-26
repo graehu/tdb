@@ -6,6 +6,7 @@ import threading
 import json
 import socket
 import urllib.parse
+import os
 
 
 db_lock = threading.Lock()
@@ -37,6 +38,7 @@ class TdbServer(SimpleHTTPRequestHandler):
             options = ("web "+urllib.parse.unquote(queries["opts"])) if "opts" in queries else ""
             options = tdb.cli.parse_options(options)
             print("parsed options: "+str(options))
+
             response = {"ok": False}
             headers = {}
             headers["Content-Type"] = "text/json"
@@ -64,6 +66,22 @@ class TdbServer(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(bytes(json.dumps(response), "utf-8"))
             return
+        elif self.path.endswith("html") or self.path.endswith("js"):
+            headers = {}
+            out = ""
+            if "/tdb/html.js" == self.path:
+                headers["Content-Type"] = "text/javascript"
+                self.path = os.path.abspath(os.path.dirname(__file__)+"/html.js")
+                out = open(self.path).read()
+            elif "/index.html" == self.path:
+                headers["Content-Type"] = "text/html"
+                self.path = os.path.abspath(os.path.dirname(__file__)+"/../test.html")
+                out = open(self.path).read()
+            self.send_response(200)
+            for k, v in headers.items():
+                self.send_header(k, v)
+            self.end_headers()
+            self.wfile.write(bytes(out, "utf-8"))
         else:
             self.send_response(404)
             self.end_headers()

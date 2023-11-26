@@ -23,6 +23,7 @@ body = """<html>
     <body>
     <div class="entry_spacer"></div>
     <div id="container" class="container">
+        <script src=""tdb/html.js></script>
         <div class="entry_spacer"></div>
 {entries}
     </div>
