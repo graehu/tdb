@@ -15,6 +15,7 @@ _css = open(_css_file, "r").read()
 body = """<html>
       <header>
          <script src="mermaid.min.js"></script>
+         <script src="tdb/html.js"></script>
         <style>
 /*inserted from {css_file}*/
 {css}
@@ -22,10 +23,12 @@ body = """<html>
     </header>
     <body>
     <div class="entry_spacer"></div>
-    <div id="container" class="container">
-        <script src=""tdb/html.js></script>
+    <div class="container">
+        <input type="text" class="input"></input>
         <div class="entry_spacer"></div>
+        <div id="container">
 {entries}
+        </div>
     </div>
     </body>
 </html>

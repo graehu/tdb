@@ -29,6 +29,14 @@ body {
   color: #aaa;
 }
 
+.input {
+  width: 80%;
+  display: block;
+  margin: 0 auto;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  font-size: 18px;
+}
 
 .entry {
   margin: auto;

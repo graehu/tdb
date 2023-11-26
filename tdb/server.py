@@ -1,5 +1,6 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import tdb.cli
+import tdb.html
 import tdb.records
 import contextlib
 import threading
@@ -75,8 +76,7 @@ class TdbServer(SimpleHTTPRequestHandler):
                 out = open(self.path).read()
             elif "/index.html" == self.path:
                 headers["Content-Type"] = "text/html"
-                self.path = os.path.abspath(os.path.dirname(__file__)+"/../test.html")
-                out = open(self.path).read()
+                out = tdb.html.build_html([])
             self.send_response(200)
             for k, v in headers.items():
                 self.send_header(k, v)

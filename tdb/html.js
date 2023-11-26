@@ -10,18 +10,17 @@ function httpGet(theUrl, callback) {
 };
 document.addEventListener("DOMContentLoaded", function () {
 	const input = document.querySelector("input");
+	const container = document.getElementById("container");
 
 	input.addEventListener("input", updateValue);
 
 	function updateValue(e) {
-		console.log("this is happening?");
-		const url = "http://localhost:8000/api/get.records?opts=" + encodeURI(input.value);
+		const url = "http://localhost:8000/api/get.records?opts=" + encodeURI(input.value+ " format:html_entries");
 		httpGet(url, function (response) {
 			response = JSON.parse(response);
 			if (response["ok"]) {
-				console.log(response);
+				container.innerHTML = response["records"];
 			}
 		});
-		console.log(url);
 	}
 });
