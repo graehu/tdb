@@ -50,6 +50,14 @@ def _init():
         _skip_shutdown = False
 
 
+def update():
+    global _db_text
+    global _db_mtime
+    if not _db_text or _db_mtime != os.path.getmtime(_db_file):
+        _db_text = open(_db_file).read()
+        _db_mtime = os.path.getmtime(_db_file)
+
+
 def get_filename(): return _db_file
 def get_archive(): return _db_archive
 def get_text():

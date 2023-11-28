@@ -1,4 +1,5 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import tdb.db
 import tdb.cli
 import tdb.html
 import tdb.records
@@ -7,10 +8,11 @@ import threading
 import json
 import socket
 import urllib.parse
+import time
 import os
 
-
 db_lock = threading.Lock()
+running = True
 
 class TdbServer(SimpleHTTPRequestHandler):
     """
@@ -120,6 +122,7 @@ def _get_best_family(*address):
 
 
 def start_server(port=8000):
+    global running
     # ensure dual-stack is not disabled; ref #38907
     class DualStackServer(ThreadingHTTPServer):
         def server_bind(self):
@@ -134,11 +137,20 @@ def start_server(port=8000):
 
     webServer = DualStackServer(addr, TdbServer)
     print("Server started http://%s:%s" % (addr))
+    def update():
+        global running
+        while running:
+            tdb.db.update()
+            time.sleep(0.1)
     try:
+        update_thread = threading.Thread(target=update)
+        update_thread.start()
         webServer.serve_forever()
     except KeyboardInterrupt:
         pass
 
+    running = False
+    update_thread.join(10)
     webServer.server_close()
     print("Server stopped.")
 
