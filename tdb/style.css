@@ -36,6 +36,8 @@ body {
   padding: 6px 10px;
   box-sizing: border-box;
   font-size: 18px;
+  background: #eee;
+  border: none;
 }
 
 .entry {

@@ -24,7 +24,10 @@ body = """<html>
     <body>
     <div class="entry_spacer"></div>
     <div class="container">
-        <input type="text" class="input"></input>
+        <div class="entry_spacer"></div>
+        <div class="entry" id="input_entry">
+            <input type="text" class="input" placeholder="search"></input>
+        </div>
         <div class="entry_spacer"></div>
         <div id="container">
 {entries}
