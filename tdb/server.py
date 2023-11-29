@@ -10,6 +10,7 @@ import socket
 import urllib.parse
 import time
 import os
+import webbrowser
 
 db_lock = threading.Lock()
 running = True
@@ -118,6 +119,7 @@ def _get_best_family(*address):
         flags=socket.AI_PASSIVE,
     )
     family, type, proto, canonname, sockaddr = next(iter(infos))
+    print(infos)
     return family, sockaddr
 
 
@@ -136,7 +138,7 @@ def start_server(port=8000):
     DualStackServer.address_family, addr = _get_best_family(None, port)
 
     webServer = DualStackServer(addr, TdbServer)
-    print("Server started http://%s:%s" % (addr))
+    print(f"Server started http://localhost:{addr[1]}")
     def update():
         global running
         while running:
@@ -145,6 +147,7 @@ def start_server(port=8000):
     try:
         update_thread = threading.Thread(target=update)
         update_thread.start()
+        webbrowser.open(f"http://localhost:{addr[1]}/index.html")
         webServer.serve_forever()
     except KeyboardInterrupt:
         pass
