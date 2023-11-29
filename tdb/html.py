@@ -12,6 +12,13 @@ if not os.path.exists(_css_file): _css_file = "/".join((os.path.dirname(__file__
 
 _css = open(_css_file, "r").read()
 
+search = """
+<div class="entry_spacer"></div>
+<div class="entry" id="input_entry">
+    <input type="text" class="input" placeholder="search"></input>
+</div>
+"""
+
 body = """<html>
       <header>
          <script src="mermaid.min.js"></script>
@@ -24,10 +31,7 @@ body = """<html>
     <body>
     <div class="entry_spacer"></div>
     <div class="container">
-        <div class="entry_spacer"></div>
-        <div class="entry" id="input_entry">
-            <input type="text" class="input" placeholder="search"></input>
-        </div>
+        {search}
         <div class="entry_spacer"></div>
         <div id="container">
 {entries}
@@ -48,9 +52,10 @@ entry = """
     <div class="entry_spacer"></div>
 """
 
-def build_html(entries):
+def build_html(entries, wants_search=False):
     entries_str = build_html_entries(entries)
-    return body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str})
+    if wants_search: return body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str, "search":search})
+    else: return body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str, "search":""})
 
 
 def build_html_entries(entries):

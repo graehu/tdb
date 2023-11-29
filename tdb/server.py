@@ -79,7 +79,7 @@ class TdbServer(SimpleHTTPRequestHandler):
                 out = open(self.path).read()
             elif "/index.html" == self.path:
                 headers["Content-Type"] = "text/html"
-                out = tdb.html.build_html([])
+                out = tdb.html.build_html([], True)
             self.send_response(200)
             for k, v in headers.items():
                 self.send_header(k, v)
