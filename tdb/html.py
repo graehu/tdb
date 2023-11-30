@@ -1,10 +1,10 @@
 import tdb.config
 import sys
+import os
+import re
+import string
 try: import markdown
 except: pass
-try: import md_mermaid
-except: pass
-import os
 
 _css_file = "/".join((tdb.config._tdb_dir, "style.css"))
 _mermaid_js_file = "/".join((tdb.config._tdb_dir, "mermaid.min.js"))
@@ -52,6 +52,32 @@ entry = """
     <div class="entry_spacer"></div>
 """
 
+def preprocess_mermaid(text):
+    re_mermaid = re.compile(r"^`{3}\s*mermaid\s*$", re.IGNORECASE)
+    lines = text.splitlines()
+    out_lines = []
+    m_start = None
+    m_end = None
+    in_mermaid_code = False
+    for line in lines:
+        line = ''.join(filter(lambda x: x in string.printable, line))
+        if not in_mermaid_code:
+            m_start = re_mermaid.match(line)
+        else:
+            m_end = line.startswith("```")
+            if m_end: in_mermaid_code = False
+        if m_start:
+            in_mermaid_code = True
+            out_lines.append('<div class="mermaid">')
+            m_start = None
+        elif m_end:
+            out_lines.append('</div>')
+            m_end = None
+        elif in_mermaid_code: out_lines.append(line.strip())
+        else: out_lines.append(line)
+    return "\n".join(out_lines)
+
+
 def build_html(entries, server=False):
     entries_str = build_html_entries(entries)
     if server:
@@ -76,10 +102,8 @@ def build_html_entries(entries):
     entries_str = ""
     for in_entry in entries:
         if "markdown" in sys.modules:
-            extensions = ["extra", "codehilite"]
-            if "md_mermaid" in sys.modules: extensions.append("md_mermaid")
-            try: in_entry["text"] = markdown.markdown(in_entry["text"], extensions=extensions)
-            except: in_entry["text"] = markdown.markdown(in_entry["text"], extensions=["extra", "codehilite"])
+            in_entry["text"] = preprocess_mermaid(in_entry["text"])
+            in_entry["text"] = markdown.markdown(in_entry["text"], extensions=["extra", "codehilite"])
         else:
             in_entry["text"] = "<pre>"+in_entry["text"]+"</pre>"
         entries_str += entry.format_map(in_entry)
