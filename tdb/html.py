@@ -7,10 +7,12 @@ except: pass
 import os
 
 _css_file = "/".join((tdb.config._tdb_dir, "style.css"))
+_mermaid_js_file = "/".join((tdb.config._tdb_dir, "mermaid.min.js"))
+_mermaid_css_file = "/".join((tdb.config._tdb_dir, "mermaid.css"))
 
 if not os.path.exists(_css_file): _css_file = "/".join((os.path.dirname(__file__), "style.css"))
-
-_css = open(_css_file, "r").read()
+if not os.path.exists(_mermaid_js_file): _mermaid_js_file = None
+if not os.path.exists(_mermaid_css_file): _mermaid_css_file = None
 
 search = """
 <div class="entry_spacer"></div>
@@ -21,12 +23,9 @@ search = """
 
 body = """<html>
       <header>
-         <script src="mermaid.min.js"></script>
          <script src="tdb/html.js"></script>
-        <style>
-/*inserted from {css_file}*/
-{css}
-        </style>
+        {mermaid}
+        {css}
     </header>
     <body>
     <div class="entry_spacer"></div>
@@ -40,6 +39,7 @@ body = """<html>
     </body>
 </html>
 """
+
 entry = """
     <div class="entry">
         <div class="date">
@@ -52,10 +52,24 @@ entry = """
     <div class="entry_spacer"></div>
 """
 
-def build_html(entries, wants_search=False):
+def build_html(entries, server=False):
     entries_str = build_html_entries(entries)
-    if wants_search: return body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str, "search":search})
-    else: return body.format_map({"css":_css, "css_file":_css_file, "entries":entries_str, "search":""})
+    if server:
+        _css = "<link rel=\"stylesheet\" href=\"tdb/style.css\">\n"
+        _mermaid = ""
+        if _mermaid_js_file:
+            _mermaid = "<script src=\"tdb/mermaid.min.js\"></script>\n"
+            _mermaid = _mermaid+"<script>mermaid.initialize({startOnLoad:true});</script>\n"
+            _mermaid = _mermaid+"<link rel=\"stylesheet\" href=\"tdb/mermaid.css\">\n" if _mermaid_css_file else ""
+        return body.format_map({"css":_css, "mermaid":_mermaid, "entries":entries_str, "search":search})
+    else:
+        _css = "<style>\n"+open(_css_file).read()+"\n</style>\n"
+        _mermaid = ""
+        if _mermaid_js_file and _mermaid_css_file:
+            _mermaid = "<script>\n"+open(_mermaid_js_file).read()+"\n</script>\n"
+            _mermaid = _mermaid+"<script>mermaid.initialize({startOnLoad:true});</script>\n"
+            _mermaid = _mermaid+"<style>\n"+open(_mermaid_css_file).read()+"\n</style>\n"
+        return body.format_map({"css":_css, "mermaid":_mermaid, "entries":entries_str, "search":""})
 
 
 def build_html_entries(entries):

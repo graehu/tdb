@@ -11,31 +11,35 @@ function httpGet(theUrl, callback) {
 
 document.addEventListener("DOMContentLoaded", function () {
 	const input = document.querySelector("input");
-	const container = document.getElementById("container");
-
-	input.addEventListener("input", updateValue);
-	let searchParams = new URLSearchParams(window.location.search);
-	if (searchParams.get("opts"))
+	if (input)
 	{
-		input.value = decodeURI(searchParams.get("opts"));
-		updateValue();
-	}
-	
-	function updateValue(e=null) {
-		if(input.value)
+		const container = document.getElementById("container");
+
+		input.addEventListener("input", updateValue);
+		let searchParams = new URLSearchParams(window.location.search);
+		if (searchParams.get("opts"))
 		{
-			const url = window.origin + "/api/get.records"+"?opts="+encodeURI(input.value + " format:html_entries");
-			insertUrlParam("opts", encodeURI(input.value))
-			httpGet(url, function (response) {
-				response = JSON.parse(response);
-				if (response["ok"]) {
-					container.innerHTML = response["records"];
-				}
-			});
+			input.value = decodeURI(searchParams.get("opts"));
+			updateValue();
 		}
-		else
-		{
-			removeUrlParam("opts")
+		
+		function updateValue(e=null) {
+			if(input.value)
+			{
+				const url = window.origin + "/api/get.records"+"?opts="+encodeURI(input.value + " format:html_entries");
+				insertUrlParam("opts", encodeURI(input.value));
+				httpGet(url, function (response) {
+					response = JSON.parse(response);
+					if (response["ok"]) {
+						container.innerHTML = response["records"];
+						if (mermaid) { mermaid.run(); }
+					}
+				});
+			}
+			else
+			{
+				removeUrlParam("opts");
+			}
 		}
 	}
 });
