@@ -41,14 +41,13 @@ class TdbServer(SimpleHTTPRequestHandler):
             
             options = ("web "+urllib.parse.unquote(queries["opts"])) if "opts" in queries else ""
             options = tdb.cli.parse_options(options)
-            print("parsed options: "+str(options))
+            # print("parsed options: "+str(options))
 
             response = {"ok": False}
             headers = {}
             headers["Content-Type"] = "text/json"
 
             if "/api/get.records" == self.path:
-                print("getting records")
                 response["ok"] = True
                 response["records"] = tdb.records.stringify_records(options)
             elif "/api/get.tags" == self.path:
@@ -95,11 +94,12 @@ class TdbServer(SimpleHTTPRequestHandler):
         if "/api/add.records" == self.path:
             try:
                 db_lock.acquire()
-                response["ok"] = True
                 data_string = self.rfile.read(int(self.headers['Content-Length']))
                 parsed = data_string.decode("utf-8")
                 parsed = json.loads(parsed)
-                print(parsed)
+                if "record" in parsed:
+                    tdb.records.add_record(parsed["record"])
+                    response["ok"] = True
             finally:
                 db_lock.release()
                 pass
@@ -119,7 +119,6 @@ def _get_best_family(*address):
         flags=socket.AI_PASSIVE,
     )
     family, type, proto, canonname, sockaddr = next(iter(infos))
-    print(infos)
     return family, sockaddr
 
 
