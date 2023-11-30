@@ -166,7 +166,8 @@ def merge_records(text_head, text_a, text_b):
             print("Warning: conflict in ")
             tdb.db._db_has_conflicts = True
         print("\t"+str(in_record).splitlines()[0])
-        in_record.text += "\n@tdb_conflict\n\n"
+        if "@tdb_conflict" not in in_record.text:
+            in_record.text += "\n@tdb_conflict\n\n"
         
     out = []
     while head or a_db or b_db:
@@ -199,7 +200,7 @@ def merge_records(text_head, text_a, text_b):
             elif h.text != a.text and h.text != b.text:
                 import difflib
                 diff = difflib.Differ().compare(a.text.splitlines(keepends=True), b.text.splitlines(keepends=True))
-                h.text = "".join([l[2:] for l in list(diff)])
+                h.text = "".join([l[2:] if l[0] == " " else l for l in list(diff)])
                 handle_conflict(h)
             out.append(h)
             continue
