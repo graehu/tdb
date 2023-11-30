@@ -48,16 +48,15 @@ def import_addons():
 
 
 def main():
-    if len(sys.argv) < 2 or "--help" in sys.argv:
+    if len(sys.argv) < 2 or "--help" in sys.argv or sys.argv[1] == "help":
         print("# tdb\n\nA text based database with tagging.\n\n```")
-        print("Usage: py -m tdb [add | edit | template | show | config | archive | listen] [text | options]")
+        print("Usage: py -m tdb [add | edit | template | show | open | listen] [text | options]")
         print("".ljust(64,"-"))
         print("Commands:")
         print("add:".ljust(16)+"Make a record when text is supplied. Otherwise, open an editor to write one.")
         print("edit:".ljust(16)+"Open an editor with some view of the database, see options.")
         print("template:".ljust(16)+"Open an editor to write a record with the passed template file as a basis.")
-        print("config:".ljust(16)+"Open tdbs config file.")
-        print("archive:".ljust(16)+"Open tdbs archive. Check here if you lose a record.")
+        print("open:".ljust(16)+"Open tdbs files: tdb open ['archive', 'config', 'db']")
         print("listen:".ljust(16)+"Starts a server listening on passed port.")
         print("".ljust(64,"-"))
         tdb.cli.print_options()
@@ -84,12 +83,13 @@ def main():
     elif command == "show":
         tdb.records.print_records(options)
 
-    elif command == "config":
-        tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
-
-    elif command == "archive":
-            tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_archive()}")
-            
+    elif command == "open":
+        if "config" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
+        elif "db" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
+        elif "archive" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_archive()}")
+        else:
+            print("can't open '"+" ".join(sys.argv[2:])+"'.\noptions: 'config', 'db', or 'archive'")
+            sys.exit(1)
     elif command == "edit":
         import_addons()
         if any(options.values()):
@@ -115,7 +115,8 @@ def main():
             elif content != text:
                 update_db(content, text) # this should never happen.
         else:
-            tdb.cli.run(f"{tdb.config.get('editor')} {tdb.db.get_filename()}")
+            print("no records selected for edit, see options")
+            sys.exit(1)
 
     elif command == "template":
         import_addons()

@@ -3,14 +3,14 @@
 A text based database with tagging.
 
 ```
-Usage: py -m tdb [add | edit | template | show | config | archive] [text | options]
+Usage: py -m tdb [add | edit | template | show | open | listen] [text | options]
 ----------------------------------------------------------------
 Commands:
 add:            Make a record when text is supplied. Otherwise, open an editor to write one.
 edit:           Open an editor with some view of the database, see options.
 template:       Open an editor to write a record with the passed template file as a basis.
-config:         Open tdbs config file.
-archive:        Open tdbs archive. Check here if you lose a record.
+open:           Open tdbs files: tdb open ['archive', 'config', 'db']
+listen:         Starts a server listening on passed port.
 ----------------------------------------------------------------
 Options:
 span:           The records to select, example: span:7d is the last 7 days.

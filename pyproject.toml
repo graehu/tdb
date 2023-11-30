@@ -25,5 +25,6 @@ classifiers = [
 include = [
   "pyproject.toml",
   "**/*.py",
-  "tdb/style.css"
+  "tdb/style.css",
+  "tdb/html.js"
 ]
