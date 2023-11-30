@@ -72,7 +72,6 @@ class TdbServer(SimpleHTTPRequestHandler):
         elif any(map(self.path.endswith, [".js", ".html", ".css"])):
             headers = {}
             out = ""
-            print(self.path)
             if "/tdb/html.js" == self.path:
                 headers["Content-Type"] = "text/javascript"
                 self.path = os.path.abspath(os.path.dirname(__file__)+"/html.js")
