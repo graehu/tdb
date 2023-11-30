@@ -33,10 +33,10 @@ class TdbServer(SimpleHTTPRequestHandler):
                 query_list = [query_list]
         
         # put the queries into a dict        
-        if query_list:
+        if query_list and self.path.startswith("/api/"):
             queries = {}
             for q in query_list:
-                k, v = q.split("=")
+                k, v = q.split("=", 1)
                 queries[k] = v
             
             options = ("web "+urllib.parse.unquote(queries["opts"])) if "opts" in queries else ""
@@ -91,7 +91,7 @@ class TdbServer(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         response = {"ok": False}
-        if "/api/add.records" == self.path:
+        if "/api/add.record" == self.path:
             try:
                 db_lock.acquire()
                 data_string = self.rfile.read(int(self.headers['Content-Length']))
