@@ -138,9 +138,11 @@ def main():
             print(f"'{template}' is not a valid file")
     elif command == "listen":
         port = 8000
-        try: port = int(options["ocontains"][0])
-        except Exception as e: pass 
-        tdb.server.start_server(port)
+        try:
+            port = int(options["ocontains"][0])
+            del options["ocontains"][0]
+        except Exception as e: pass
+        tdb.server.start_server(port, options)
     else:
         print("Invalid command. Try again.")
         sys.exit(1)

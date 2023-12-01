@@ -13,6 +13,7 @@ import os
 import webbrowser
 
 db_lock = threading.Lock()
+opt_overrides = {}
 running = True
 
 class TdbServer(SimpleHTTPRequestHandler):
@@ -41,7 +42,10 @@ class TdbServer(SimpleHTTPRequestHandler):
             
             options = ("web "+urllib.parse.unquote(queries["opts"])) if "opts" in queries else ""
             options = tdb.cli.parse_options(options)
-            # print("parsed options: "+str(options))
+
+            for k in options:
+                if isinstance(options[k], list): options[k] += opt_overrides[k]
+                elif opt_overrides[k]: options[k] = opt_overrides[k]
 
             response = {"ok": False}
             headers = {}
@@ -134,8 +138,11 @@ def _get_best_family(*address):
     return family, sockaddr
 
 
-def start_server(port=8000):
+def start_server(port=8000, options={}):
     global running
+    global opt_overrides
+
+    opt_overrides = options
     # ensure dual-stack is not disabled; ref #38907
     class DualStackServer(ThreadingHTTPServer):
         def server_bind(self):
