@@ -234,7 +234,13 @@ def stringify_records(options=None):
     elif options and options["format"] == "short":
         out = "".join([str(r).splitlines()[0]+"\n" for r in results])
         out = out.strip()
-        print(out.strip())
+    elif options and options["format"] == "tags":
+        tags = {}
+        for r in results:
+            for t in r.tags:
+                if t[0] in tags: tags[t[0]] += 1
+                else: tags[t[0]] = 1
+        out = json.dumps(tags, indent=2)
     else:
         out = "".join([str(r) for r in results])
         out = out.strip()
@@ -268,6 +274,7 @@ def filter_records(records, options):
     for record in records:
         date = record.date
         low_text = record.text.lower()
+        flat_tags = [x[0] for x in record.tags]
         skip = False
         if not skip and span:
             skip = True
@@ -301,9 +308,9 @@ def filter_records(records, options):
         if not skip and ocontains: skip = not any([c in low_text for c in ocontains])
         if not skip and acontains: skip = not all([c in low_text for c in acontains])
         if not skip and ncontains: skip = any([c in low_text for c in ncontains])
-        if not skip and otags: skip = not any([tdb.tags.contains_tag(low_text, t) for t in otags])
-        if not skip and atags: skip = not all([tdb.tags.contains_tag(low_text, t) for t in atags])
-        if not skip and ntags: skip = any([tdb.tags.contains_tag(low_text, t) for t in ntags])
+        if not skip and otags: skip = not any([t in flat_tags for t in otags])
+        if not skip and atags: skip = not all([t in flat_tags for t in atags])
+        if not skip and ntags: skip = any([t in flat_tags for t in ntags])
         if not skip: out.append(record)
     
     return out
@@ -360,8 +367,11 @@ def split_records(text: str, options=None):
             id += 1
             x,y = last["span"][1], current["span"][0]
             section = text[x:y]
+            sec_low = section.lower()
             date = last["date"]
+            tags = tdb.tags.find_tags(sec_low)
             last["text"] = section
+            last["tags"] = tags
             last["span"] = (x ,y)
             last["id"] = id
 
@@ -382,14 +392,13 @@ def split_records(text: str, options=None):
 
                 elif span[0] <= date <= span[1]: skip = False
 
-            sec_low = section.lower()
-
+            flat_tags = [x[0] for x in tags]
             if not skip and ocontains: skip = not any([c in sec_low for c in ocontains])
             if not skip and acontains: skip = not all([c in sec_low for c in acontains])
             if not skip and ncontains: skip = any([c in sec_low for c in ncontains])
-            if not skip and otags: skip = not any([tdb.tags.contains_tag(sec_low, t) for t in otags])
-            if not skip and atags: skip = not all([tdb.tags.contains_tag(sec_low, t) for t in atags])
-            if not skip and ntags: skip = any([tdb.tags.contains_tag(sec_low, t) for t in ntags])
+            if not skip and otags: skip = not any([t in flat_tags for t in otags])
+            if not skip and atags: skip = not all([t in flat_tags for t in atags])
+            if not skip and ntags: skip = any([t in flat_tags for t in ntags])
             if not skip: filtered.append(last)
 
     for match in re_hex_record.finditer(text):
