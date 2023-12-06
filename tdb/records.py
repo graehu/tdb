@@ -224,17 +224,17 @@ def stringify_records(options=None):
     results = []
     results = split_db_records(options)
     out = ""
-    if options and options["format"] == "json":
+    if options and options["as"] == "json":
         res = [r.asdict() for r in results]
         out = json.dumps(res, indent=2)
-    elif options and options["format"] == "html":
+    elif options and options["as"] == "html":
         out = tdb.html.build_html(reversed([r.asdict() for r in results]))
-    elif options and options["format"] == "html_entries":
+    elif options and options["as"] == "html_entries":
         out = tdb.html.build_html_entries(reversed([r.asdict() for r in results]))
-    elif options and options["format"] == "short":
+    elif options and options["as"] == "list":
         out = "".join([str(r).splitlines()[0]+"\n" for r in results])
         out = out.strip()
-    elif options and options["format"] == "tags":
+    elif options and options["as"] == "tags":
         tags = {}
         for r in results:
             for t in r.tags:
@@ -303,6 +303,9 @@ def filter_records(records, options):
                 else:
                     skip = span[1] >= 0 and date <= span[0]
 
+            # elif span[0] == date:
+            #     print("found exact!")
+            #     skip = False
             elif span[0] <= date <= span[1]: skip = False
 
         if not skip and ocontains: skip = not any([c in low_text for c in ocontains])
@@ -379,7 +382,7 @@ def split_records(text: str, options=None):
             skip = False
             if not skip and span:
                 skip = True
-
+                # TODO: this code is repeated in filter db, which isn't great.
                 if all(map(lambda x: isinstance(x, int), span)): skip = False
                 elif isinstance(span[0], int): skip = False
                 elif isinstance(span[1], int):

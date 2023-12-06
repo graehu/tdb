@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		function updateValue(e=null) {
 			if(input.value)
 			{
-				const url = window.origin + "/api/get.records"+"?opts="+encodeURI(input.value + " format:html_entries");
+				const url = window.origin + "/api/get.records"+"?opts="+encodeURI(input.value + " as:html_entries");
 				insertUrlParam("opts", encodeURI(input.value));
 				httpGet(url, function (response) {
 					response = JSON.parse(response);
