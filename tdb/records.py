@@ -248,11 +248,11 @@ def stringify_records(options=None):
 
 
 def print_records(options=None):
-    print(stringify_records(options))
+    if out := stringify_records(options): print(out)
 
 
 def filter_records(records, options):
-    max_id = len(records)
+    max_id = len(records)-1
     id_offset = -1
     out = []
     end_date = None
@@ -341,68 +341,26 @@ def split_db_records(options=None):
     else: return _record_cache
 
 
-def split_records(text: str, options=None):
+def split_records(text: str):
     global _needs_sort
     text = convert_headers(text)
     last = None
     current = None
-    id = 0
-    id_offset = -1
-
-    filtered = []
-
-    otags = options["otags"] if options else []
-    ntags = options["ntags"] if options else []
-    atags = options["atags"] if options else []
-    span = options["span"] if options else []
-    acontains = options["acontains"] if options else []
-    ocontains = options["ocontains"] if options else []
-    ncontains = options["ncontains"] if options else []
+    records = []
 
     def append_record():
-        nonlocal filtered
+        nonlocal records
         nonlocal last
         nonlocal current
-        nonlocal id
-        nonlocal id_offset
 
         if last:
-            id += 1
             x,y = last["span"][1], current["span"][0]
             section = text[x:y]
-            sec_low = section.lower()
-            date = last["date"]
-            tags = tdb.tags.find_tags(sec_low)
+            tags = tdb.tags.find_tags(section.lower())
             last["text"] = section
             last["tags"] = tags
             last["span"] = (x ,y)
-            last["id"] = id
-
-
-            skip = False
-            if not skip and span:
-                skip = True
-                # TODO: this code is repeated in filter db, which isn't great.
-                if all(map(lambda x: isinstance(x, int), span)): skip = False
-                elif isinstance(span[0], int): skip = False
-                elif isinstance(span[1], int):
-
-                    if span[1] >= 0 and date >= span[0]:
-                        if id_offset == -1: id_offset = id
-                        skip = not (id - id_offset) < span[1]
-                    else:
-                        skip = span[1] >= 0 and date <= span[0]
-
-                elif span[0] <= date <= span[1]: skip = False
-
-            flat_tags = [x[0] for x in tags]
-            if not skip and ocontains: skip = not any([c in sec_low for c in ocontains])
-            if not skip and acontains: skip = not all([c in sec_low for c in acontains])
-            if not skip and ncontains: skip = any([c in sec_low for c in ncontains])
-            if not skip and otags: skip = not any([t in flat_tags for t in otags])
-            if not skip and atags: skip = not all([t in flat_tags for t in atags])
-            if not skip and ntags: skip = any([t in flat_tags for t in ntags])
-            if not skip: filtered.append(last)
+            records.append(last)
 
     for match in re_hex_record.finditer(text):
         nano = int(match.group(1), 16)
@@ -416,7 +374,6 @@ def split_records(text: str, options=None):
             "time": nano,
             "delta": delta,
             "text": "",
-            "id": 0,
             "tags": [],
             "span": match.span(),
             "pos": match.span()[0]
@@ -429,40 +386,10 @@ def split_records(text: str, options=None):
     current = {"span": [len(text)]}
     append_record()
 
-    id_offset = -1
-    end_date = None
-    if span:
-        # for record in records:
-        def post_filter(record):
-            nonlocal span
-            nonlocal id_offset
-            nonlocal id
-            nonlocal end_date
-            if all(map(lambda x: isinstance(x, int), span)):
-                return id+span[0] < record["id"] <= id+span[0]+span[1]
-
-            elif isinstance(span[1], int):
-                # tested all the r[1] >= 0 above the given date.
-                if span[1] >= 0: return True
-                # TODO: fix this logic, 1d,-1 is valid and this doesn't get the right record
-                elif span[1] < 0 and record["date"] <= span[0]:
-                    if id_offset == -1: id_offset = record["id"]
-                    return abs(record["id"]-id_offset) < abs(span[1])
-
-            elif isinstance(span[0], int):
-                if span[0] < 0 and (id+span[0]) < record["id"]:
-                    if not end_date:
-                        if isinstance(span[1], datetime): end_date = span[1]
-                        else: end_date = record["date"] + span[1]
-
-                    return record["date"] <= end_date
-                
-            else: return True
-        
-        filtered = filter(post_filter, filtered)
-    if _needs_sort: filtered = sorted(filtered, key=lambda x: x["time"])
-    filtered = [Record(**r) for r in filtered]
-    return filtered
+    if _needs_sort: records = sorted(records, key=lambda x: x["time"])
+    ids = range(0, len(records))
+    records = [Record(**r, id=id) for id, r in zip(ids, records)]
+    return records
 
 
 def find_similar(text):
