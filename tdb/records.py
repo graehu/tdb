@@ -43,12 +43,10 @@ def convert_headers(text):
 class Record(object):
     text = ""
     time = 0
-    delta = 0
     date = None
     tags = []
     span = (0,0)
-    pos = 0
-    def __init__(self, text, time, delta, date, tags, span, pos):
+    def __init__(self, text, time, date, tags, span):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -57,8 +55,6 @@ class Record(object):
         self.tags = tags
         self.span = span
         self.time = time
-        self.delta = delta
-        self.pos = pos
 
     def __str__(self):
         if _force_hex:
@@ -345,16 +341,12 @@ def split_records(text: str):
         
         if int(nano/1E9) > 1E9:
             nano = int(nano/1E3)
-        delta = 0
-        if last: delta = nano - last["time"]
         current = {
             "date": datetime.fromtimestamp(nano/1E6),
             "time": nano,
-            "delta": delta,
             "text": "",
             "tags": [],
-            "span": match.span(),
-            "pos": match.span()[0]
+            "span": match.span()
         }
         if last and last["time"] > current["time"]: _needs_sort = True
 
