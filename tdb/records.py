@@ -48,8 +48,7 @@ class Record(object):
     tags = []
     span = (0,0)
     pos = 0
-    id = -1
-    def __init__(self, text, time, delta, date, tags, span, pos, id):
+    def __init__(self, text, time, delta, date, tags, span, pos):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -59,7 +58,6 @@ class Record(object):
         self.span = span
         self.time = time
         self.delta = delta
-        self.id = id
         self.pos = pos
 
     def __str__(self):
@@ -74,7 +72,7 @@ class Record(object):
         return f"[tdb:{hex(self.time)}] {self.text}"
     
     def asdict(self):
-        return {'text': self.text, 'time': self.time, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span, 'id':self.id }
+        return {'text': self.text, 'time': self.time, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span }
 
 
 def register_cmd(func):
@@ -251,11 +249,9 @@ def print_records(options=None):
     if out := stringify_records(options): print(out)
 
 
-def filter_records(records, options):
+def filter_records(records : list, options : list):
     max_id = len(records)-1
-    id_offset = -1
     out = []
-    end_date = None
 
     span = options["span"] if options else []
     otags = options["otags"] if options else []
@@ -265,49 +261,31 @@ def filter_records(records, options):
     ocontains = options["ocontains"] if options else []
     ncontains = options["ncontains"] if options else []
 
-    # TODO: id's should be linear by this point
-    # optimizations like:
-    # > if all(map(lambda x: isinstance(x, int), span)): records[span[0]:span[1]]
-    # should be very possible.
-    # for date ranged, just break when you leave the range.
+    if span:
+        if all(map(lambda x: isinstance(x, int), span)):
+            span = sorted([span[0], span[0]+span[1]])
+            span[0] = min(max(0, span[0]+max_id+1), max_id)
+            span[1] = min(max(0, span[1]+max_id+1), max_id)
+            records = records[span[0]:span[1]]
+
+        elif isinstance(span[0], int):
+            span[0] = min(max(0, span[0]+max_id+1), max_id)
+            records = records[span[0]:]
+            span[1] = next((i for i,v in enumerate(records) if v.date >= span[1]), max_id)
+            records = records[:span[1]+span[0]]
+
+        elif isinstance(span[1], int):
+            span[0] = next((i for i,v in enumerate(records) if v.date >= span[0]), max_id)
+            span[1] = min(max(0, span[0]+span[1]), span[1])
+            span = sorted([span[0],span[0]+span[1]])
+            records = records[span[0]:span[1]]
+        else:
+            records = [r for r in records if span[0] <= r.date <= span[1]]
 
     for record in records:
-        date = record.date
         low_text = record.text.lower()
         flat_tags = [x[0] for x in record.tags]
         skip = False
-        if not skip and span:
-            skip = True
-
-            if all(map(lambda x: isinstance(x, int), span)):
-                skip = not (max_id+span[0] < record.id <= max_id+span[0]+span[1])
-
-            elif isinstance(span[0], int):
-                if span[0] < 0 and (max_id+span[0]) < record.id:
-                    if not end_date:
-                        if isinstance(span[1], datetime): end_date = span[1]
-                        else: end_date = record.date + span[1]
-                    skip = not (date <= end_date)
-                else: assert("we're not doing dates in the future")
-
-            elif isinstance(span[1], int):
-
-                if span[1] >= 0 and date >= span[0]:
-                    if id_offset == -1: id_offset = record.id
-                    skip = not ((record.id - id_offset) < span[1])
-                
-                elif span[1] < 0 and date <= span[0]:
-                    if id_offset == -1: id_offset = record.id
-                    skip = not (abs(record.id-id_offset) < abs(span[1]))
-                
-                else:
-                    skip = span[1] >= 0 and date <= span[0]
-
-            # elif span[0] == date:
-            #     print("found exact!")
-            #     skip = False
-            elif span[0] <= date <= span[1]: skip = False
-
         if not skip and ocontains: skip = not any([c in low_text for c in ocontains])
         if not skip and acontains: skip = not all([c in low_text for c in acontains])
         if not skip and ncontains: skip = any([c in low_text for c in ncontains])
@@ -315,7 +293,7 @@ def filter_records(records, options):
         if not skip and atags: skip = not all([t in flat_tags for t in atags])
         if not skip and ntags: skip = any([t in flat_tags for t in ntags])
         if not skip: out.append(record)
-    
+
     return out
 
 
@@ -387,8 +365,7 @@ def split_records(text: str):
     append_record()
 
     if _needs_sort: records = sorted(records, key=lambda x: x["time"])
-    ids = range(0, len(records))
-    records = [Record(**r, id=id) for id, r in zip(ids, records)]
+    records = [Record(**r) for r in records]
     return records
 
 
