@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import sys
 import subprocess
 import shlex
@@ -31,6 +32,7 @@ def print_options():
 def parse_options(override = ""):
     if override: splits = shlex.split(override)[1:]
     else: splits = sys.argv[2:]
+    dates = []
     ocontains = []
     ncontains = []
     acontains = []
@@ -47,15 +49,16 @@ def parse_options(override = ""):
         elif split.startswith("@"): otags.append(split[1:].lower())
         elif split.startswith("+"): acontains.append(split[1:].lower())
         elif split.startswith("-"): ncontains.append(split[1:].lower())
-        else: ocontains.append(split.lower())
+        else:
+            try: dates.append(datetime.fromisoformat(split))
+            except ValueError: ocontains.append(split.lower())
 
-    return {"otags":otags, "atags":atags, "ntags":ntags,
+    return {"dates":dates, "otags":otags, "atags":atags, "ntags":ntags,
             "acontains":acontains, "ocontains":ocontains, "ncontains":ncontains,
             "span":span, "as":format}
 
 
 def parse_span(args):
-    from datetime import datetime, timedelta
     import re
     now = datetime.now()
     operations = []

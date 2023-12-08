@@ -249,6 +249,7 @@ def filter_records(records : list, options : list):
     max_id = len(records)-1
     out = []
 
+    dates = options["dates"] if options else []
     span = options["span"] if options else []
     otags = options["otags"] if options else []
     ntags = options["ntags"] if options else []
@@ -277,6 +278,19 @@ def filter_records(records : list, options : list):
             records = records[span[0]:span[1]]
         else:
             records = [r for r in records if span[0] <= r.date <= span[1]]
+    
+    if dates:
+        def date_compare(a:datetime, b:datetime):
+            return (
+             (a.year == b.year or a.year == 0 or b.year == 0) and
+             (a.month == b.month or a.month == 0 or b.month == 0) and
+             (a.day == b.day or a.day == 0 or b.day == 0) and
+             (a.hour == b.hour or a.hour == 0 or b.hour == 0) and
+             (a.minute == b.minute or a.minute == 0 or b.minute == 0) and
+             (a.second == b.second or a.second == 0 or b.second == 0) and
+             (a.microsecond == b.microsecond or a.microsecond == 0 or b.microsecond == 0)
+             ) 
+        records = [r for r in records if any([date_compare(r.date, d) for d in dates])]
 
     for record in records:
         low_text = record.text.lower()
