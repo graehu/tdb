@@ -147,9 +147,9 @@ def main():
         print("Invalid command. Try again.")
         sys.exit(1)
         
-_profile = False
 if __name__ == "__main__":
-    if _profile:
+    if sys.argv[1] == "--profile":
+        del sys.argv[1]
         import cProfile
         cProfile.run("main()")
     else:
