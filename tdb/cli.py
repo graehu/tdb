@@ -39,7 +39,7 @@ def parse_options(override = ""):
     atags = []
     otags = []
     ntags = []
-    span = None
+    span = []
     format = ""
     for split in splits:
         if split.startswith("span:"): span = parse_span(split[len("span:"):].split(",",maxsplit=2))
