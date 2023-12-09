@@ -21,12 +21,14 @@ search = """
 </div>
 """
 
-body = """<html>
-      <header>
-         <script src="tdb/html.js"></script>
+body = """<!DOCTYPE html>
+<html>
+      <head>
+        <meta charset="UTF-8">
+        <script src="tdb/html.js"></script>
         {mermaid}
         {css}
-    </header>
+    </head>
     <body>
     <div class="entry_spacer"></div>
     <div class="container">
@@ -60,7 +62,6 @@ def preprocess_mermaid(text):
     m_end = None
     in_mermaid_code = False
     for line in lines:
-        line = ''.join(filter(lambda x: x in string.printable, line))
         if not in_mermaid_code:
             m_start = re_mermaid.match(line)
         else:
@@ -102,11 +103,11 @@ def build_html_entries(entries):
     entries_str = ""
     for in_entry in entries:
         if "markdown" in sys.modules:
-            in_entry["text"] = preprocess_mermaid(in_entry["text"])
-            in_entry["text"] = markdown.markdown(in_entry["text"], extensions=["extra", "codehilite"])
+            in_entry.text = preprocess_mermaid(in_entry.text)
+            in_entry.text = markdown.markdown(in_entry.text, extensions=["extra", "codehilite"])
         else:
-            in_entry["text"] = "<pre>"+in_entry["text"]+"</pre>"
-        entries_str += entry.format_map(in_entry)
+            in_entry.text = "<pre>"+in_entry.text+"</pre>"
+        entries_str += entry.format_map(in_entry.asdict())
     return entries_str
 
 
