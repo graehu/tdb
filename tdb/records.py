@@ -247,10 +247,10 @@ def print_records(options=None):
 
 def filter_records(records : list, options : list):
     max_id = len(records)-1
-    out = []
+    filtered = records.copy()
 
     dates = options["dates"] if options else []
-    span = options["span"] if options else []
+    span = options["span"].copy() if options else []
     otags = options["otags"] if options else []
     ntags = options["ntags"] if options else []
     atags = options["atags"] if options else []
@@ -263,21 +263,21 @@ def filter_records(records : list, options : list):
             span = sorted([span[0], span[0]+span[1]])
             span[0] = min(max(0, span[0]+max_id+1), max_id)
             span[1] = min(max(0, span[1]+max_id+1), max_id)
-            records = records[span[0]:span[1]]
+            filtered = filtered[span[0]:span[1]]
 
         elif isinstance(span[0], int):
             span[0] = min(max(0, span[0]+max_id+1), max_id)
-            records = records[span[0]:]
-            span[1] = next((i for i,v in enumerate(records) if v.date >= span[1]), max_id)
-            records = records[:span[1]+span[0]]
+            filtered = filtered[span[0]:]
+            span[1] = next((i for i,v in enumerate(filtered) if v.date >= span[1]), max_id)
+            filtered = filtered[:span[1]+span[0]]
 
         elif isinstance(span[1], int):
-            span[0] = next((i for i,v in enumerate(records) if v.date >= span[0]), max_id)
+            span[0] = next((i for i,v in enumerate(filtered) if v.date >= span[0]), max_id)
             span[1] = min(max(0, span[0]+span[1]), span[1])
             span = sorted([span[0],span[0]+span[1]])
-            records = records[span[0]:span[1]]
+            filtered = filtered[span[0]:span[1]]
         else:
-            records = [r for r in records if span[0] <= r.date <= span[1]]
+            filtered = [r for r in filtered if span[0] <= r.date <= span[1]]
     
     if dates:
         def date_compare(a:datetime, b:datetime):
@@ -289,10 +289,12 @@ def filter_records(records : list, options : list):
              (a.minute == b.minute or a.minute == 0 or b.minute == 0) and
              (a.second == b.second or a.second == 0 or b.second == 0) and
              (a.microsecond == b.microsecond or a.microsecond == 0 or b.microsecond == 0)
-             ) 
-        records = [r for r in records if any([date_compare(r.date, d) for d in dates])]
-
-    for record in records:
+             )
+        
+        filtered = [r for r in filtered if any([date_compare(r.date, d) for d in dates])]
+    
+    out = [] 
+    for record in filtered:
         low_text = record.text.lower()
         flat_tags = [x[0] for x in record.tags]
         skip = False
