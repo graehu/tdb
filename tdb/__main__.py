@@ -50,22 +50,24 @@ def import_addons():
 def main():
     if len(sys.argv) < 2 or "--help" in sys.argv or sys.argv[1] == "help":
         print("# tdb\n\nA text based database with tagging.\n\n```")
-        print("Usage: py -m tdb [add | edit | template | show | open | listen] [text | options]")
+        print("Usage: py -m tdb [add | edit | archive | template | show | open | listen] [text | options]")
         print("".ljust(64,"-"))
         print("Commands:")
         print("add:".ljust(16)+"Make a record when text is supplied. Otherwise, open an editor to write one.")
         print("edit:".ljust(16)+"Open an editor with some view of the database, see options.")
+        print("archive:".ljust(16)+"Move matching records to the archive.")
         print("template:".ljust(16)+"Open an editor to write a record with the passed template file as a basis.")
         print("open:".ljust(16)+"Open tdbs files: tdb open ['archive', 'config', 'db']")
         print("listen:".ljust(16)+"Starts a server listening on passed port.")
         print("".ljust(64,"-"))
         tdb.cli.print_options()
         print("```")
-        sys.exit(0)
+        sys.exit(1)
     if "--version" in sys.argv:
         dir = os.path.dirname(__file__)
         print(tomllib.load(open(dir+"/../pyproject.toml", "rb"))["project"]["version"])
         sys.exit(0)
+
     command = tdb.cli.get_command()
     options = tdb.cli.parse_options()
     edit_ext = tdb.config.get('edit_ext')
@@ -90,9 +92,23 @@ def main():
         else:
             print("can't open '"+" ".join(sys.argv[2:])+"'.\noptions: 'config', 'db', or 'archive'")
             sys.exit(1)
+    
+    elif command == "archive":
+        if options:
+            records = tdb.records.split_db_records(options)
+            if records:
+                if input(f"Archive {len(records)} record{'s' if len(records) > 1 else ''}? (y/n): ").lower().startswith("y"):
+                    tdb.records.archive_records(records)
+            else:
+                print("no records matching options.")
+            sys.exit(0)
+        
+        print("archive requires options e.g. @mytag")
+        sys.exit(1)
+
     elif command == "edit":
         import_addons()
-        if any(options.values()):
+        if options:
             records = tdb.records.split_db_records(options)
             content = "".join([str(r) for r in records])
             update_called = False
@@ -148,7 +164,7 @@ def main():
         sys.exit(1)
         
 if __name__ == "__main__":
-    if sys.argv[1] == "--profile":
+    if len(sys.argv) > 1 and sys.argv[1] == "--profile":
         del sys.argv[1]
         import cProfile
         cProfile.run("main()")

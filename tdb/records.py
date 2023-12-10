@@ -151,6 +151,13 @@ def modify_db_records(previous, current):
     for r in _record_cmds: r(current)
 
 
+def archive_records(records: list):
+    if records:
+        for r1 in records: tdb.db.archive(r1.entry())
+        print(f"Archived {len(records)} record{'s' if len(records) > 1 else ''}.")
+    else: print("Nothing archived")
+
+
 def merge_records(text_head, text_a, text_b):
     head = split_records(text_head)
     a_db = split_records(text_a)
