@@ -221,35 +221,39 @@ def merge_records(text_head, text_a, text_b):
 
 tdb.db._db_merge_func = merge_records
 
-def stringify_records(options=None):
-    results = []
-    results = split_db_records(options)
+
+def stringify_db_records(options:dict=None):
+    records = split_db_records(options)
+    return stringify_records(records, options)
+
+
+def stringify_records(records:list, options:dict=None):
     out = ""
     if options and options["as"] == "json":
-        res = [r.asdict() for r in results]
+        res = [r.asdict() for r in records]
         out = json.dumps(res, indent=2)
     elif options and options["as"] == "html":
-        out = tdb.html.build_html(list(reversed(results)))
+        out = tdb.html.build_html(list(reversed(records)))
     elif options and options["as"] == "html_entries":
-        out = tdb.html.build_html_entries(list(reversed(results)))
+        out = tdb.html.build_html_entries(list(reversed(records)))
     elif options and options["as"] == "list":
-        out = "".join([str(r).splitlines()[0]+"\n" for r in results])
+        out = "".join([str(r).splitlines()[0]+"\n" for r in records])
         out = out.strip()
     elif options and options["as"] == "tags":
         tags = {}
-        for r in results:
+        for r in records:
             for t in r.tags:
                 if t[0] in tags: tags[t[0]] += 1
                 else: tags[t[0]] = 1
         out = json.dumps(tags, indent=2)
     else:
-        out = "".join([str(r) for r in results])
+        out = "".join([str(r) for r in records])
         out = out.strip()
     return out
 
 
 def print_records(options=None):
-    if out := stringify_records(options): print(out)
+    if out := stringify_db_records(options): print(out)
 
 
 def filter_records(records : list, options : list):

@@ -44,8 +44,8 @@ class TdbServer(SimpleHTTPRequestHandler):
             options = tdb.cli.parse_options(options)
 
             for k in options:
-                if isinstance(options[k], list): options[k] += opt_overrides[k]
-                elif opt_overrides[k]: options[k] = opt_overrides[k]
+                if isinstance(options[k], list) and k in opt_overrides: options[k] += opt_overrides[k]
+                elif k in opt_overrides and opt_overrides[k]: options[k] = opt_overrides[k]
 
             response = {"ok": False}
             headers = {}
@@ -53,7 +53,7 @@ class TdbServer(SimpleHTTPRequestHandler):
 
             if "/api/get.records" == self.path:
                 response["ok"] = True
-                response["records"] = tdb.records.stringify_records(options)
+                response["records"] = tdb.records.stringify_db_records(options)
             elif "/api/get.tags" == self.path:
                 print("getting tags")
                 response["ok"] = True
@@ -142,7 +142,7 @@ def start_server(port=8000, options={}):
     global running
     global opt_overrides
 
-    opt_overrides = options
+    opt_overrides = options if options else {}
     # ensure dual-stack is not disabled; ref #38907
     class DualStackServer(ThreadingHTTPServer):
         def server_bind(self):
