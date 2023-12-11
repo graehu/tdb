@@ -107,25 +107,36 @@ class TdbServer(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         response = {"ok": False}
-        if "/api/add.record" == self.path:
-            try:
-                db_lock.acquire()
-                data_string = self.rfile.read(int(self.headers['Content-Length']))
-                parsed = data_string.decode("utf-8")
-                parsed = json.loads(parsed)
+        try:
+            db_lock.acquire()
+            data_string = self.rfile.read(int(self.headers['Content-Length']))
+            parsed = data_string.decode("utf-8")
+            parsed = json.loads(parsed)
+            if "/api/add.record" == self.path:
                 if "record" in parsed:
                     tdb.records.add_record(parsed["record"])
                     response["ok"] = True
-            finally:
-                db_lock.release()
-                pass
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(bytes(json.dumps(response), "utf-8"))
-        else:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(bytes(json.dumps(response), "utf-8"))
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(bytes(json.dumps(response), "utf-8"))
+            elif "/api/remove.record":
+                if "date" in parsed:
+                    options = tdb.cli.parse_options("web")
+                    options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]
+                    records = tdb.records.split_db_records(options)
+                    tdb.records.archive_records(records)
+                    response["ok"] = True
+                    tdb.db.serialise()
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(bytes(json.dumps(response), "utf-8"))
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(bytes(json.dumps(response), "utf-8"))
+
+        finally:
+            db_lock.release()
 
 
 def _get_best_family(*address):

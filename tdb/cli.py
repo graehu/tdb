@@ -33,16 +33,16 @@ def print_options():
 def parse_options(override = ""):
     if override: splits = shlex.split(override)[1:]
     else: splits = sys.argv[2:]
+    dates = []
+    ocontains = []
+    ncontains = []
+    acontains = []
+    atags = []
+    otags = []
+    ntags = []
+    span = []
+    format = ""
     if splits:
-        dates = []
-        ocontains = []
-        ncontains = []
-        acontains = []
-        atags = []
-        otags = []
-        ntags = []
-        span = []
-        format = ""
         for split in splits:
             if split.startswith("span:"): span = parse_span(split[len("span:"):].split(",",maxsplit=2))
             elif split.startswith("as:"): format = split[len("as:"):].lower()
@@ -55,11 +55,9 @@ def parse_options(override = ""):
                 try: dates.append(datetime.fromisoformat(split))
                 except ValueError: ocontains.append(split.lower())
 
-        return {"dates":dates, "otags":otags, "atags":atags, "ntags":ntags,
-                "acontains":acontains, "ocontains":ocontains, "ncontains":ncontains,
-                "span":span, "as":format}
-    else:
-        return None
+    return {"dates":dates, "otags":otags, "atags":atags, "ntags":ntags,
+            "acontains":acontains, "ocontains":ocontains, "ncontains":ncontains,
+            "span":span, "as":format}
 
 
 def parse_span(args):
