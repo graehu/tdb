@@ -32,6 +32,20 @@ document.addEventListener("DOMContentLoaded", function () {
 					response = JSON.parse(response);
 					if (response["ok"]) {
 						container.innerHTML = response["records"];
+						for(var i = 0; i < container.children.length; i++)
+						{
+							if (container.children[i].className == "entry")
+							{
+								var edit = document.createElement("button");
+								var remove = document.createElement("button");
+								edit.textContent = "edit";
+								remove.textContent = "remove";
+								edit.onclick = function () { console.log("clicked edit"); }; // /api/edit.record
+								remove.onclick = function () { console.log("clicked remove"); }; // /api/remove.record
+								container.children[i].appendChild(edit);
+								container.children[i].appendChild(remove);
+							}
+						}
 						if (mermaid) { mermaid.run(); }
 					}
 				});
