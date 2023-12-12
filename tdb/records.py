@@ -93,8 +93,8 @@ def add_record(text):
     tdb.db.append_immediate(record)
     tdb.db.archive(record, False)
 
-    print("Record added successfully!")
     for r in _record_cmds: r(text)
+    return True
 
 
 def deduplicate_records(in_records):
@@ -107,9 +107,7 @@ def deduplicate_records(in_records):
     return dedupe
 
 
-def modify_db_records(previous, current):
-    records = split_records(previous)
-    new_records = split_records(current)
+def modify_db_records(old_records:list, new_records:list):
     dedupe = deduplicate_records(new_records)
     if len(new_records) != len(dedupe): print("Warning: duplicate dates found. Ignoring those entries.")
     new_records = dedupe
@@ -118,7 +116,7 @@ def modify_db_records(previous, current):
     for r1 in new_records:
         modified = None
         new = True
-        for r2 in records:
+        for r2 in old_records:
             if str(r1) != str(r2) and r1.iso_str() == r2.iso_str():
                 modified = r2
                 found.append(r2)
@@ -133,29 +131,24 @@ def modify_db_records(previous, current):
             tdb.db.replace(r2.entry(), r1.entry()); mods += 1
         elif new:
             # print(f"new: {r1}")
-            # for r2 in records:
+            # for r2 in old_records:
             #     print((r1.iso_str()," != ",r2.iso_str()))
             tdb.db.append(r1.entry()); adds+=1
             pass
-    for r1 in records:
+    for r1 in old_records:
         if not r1 in found:
             # print(f"del: {r1}")
             tdb.db.archive(r1.entry()); dels+=1
             pass
     
-    if adds or mods or dels: print("".ljust(32, "="))
-    if adds: print(f"Inserted {adds} record{'s' if adds > 1 else ''}.")
-    if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
-    if dels: print(f"Archived {dels} record{'s' if dels > 1 else ''}.")
-    
-    for r in _record_cmds: r(current)
-
+    for r in _record_cmds: r("".join(map(str,new_records)))
+    return adds, mods, dels
 
 def archive_records(records: list):
     if records:
         for r1 in records: tdb.db.archive(r1.entry())
-        print(f"Archived {len(records)} record{'s' if len(records) > 1 else ''}.")
-    else: print("Nothing archived")
+        return True
+    return False
 
 
 def merge_records(text_head, text_a, text_b):

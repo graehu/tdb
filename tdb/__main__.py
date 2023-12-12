@@ -104,8 +104,10 @@ def main():
                     elif response in ["no", "n"]: response = False
                     if isinstance(response, bool): break
                 
-                if response: tdb.records.archive_records(records)
-                else: tdb.records.archive_records(None)
+                if response and tdb.records.archive_records(records):
+                    print(f"Archived {len(records)} record{'s' if len(records) > 1 else ''}.")
+                else: print("Nothing archived")
+
 
             else:
                 print("no records matching options.")
@@ -125,7 +127,14 @@ def main():
                 nonlocal update_called
                 update_called = True
                 if not text or text[-1] != "\n": text += "\n"
-                tdb.records.modify_db_records(previous, text)
+                old_records = tdb.records.split_records(previous)
+                new_records = tdb.records.split_records(text)
+                adds, mods, dels = tdb.records.modify_db_records(old_records, new_records)
+                if adds or mods or dels: print("".ljust(32, "="))
+                if adds: print(f"Inserted {adds} record{'s' if adds > 1 else ''}.")
+                if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
+                if dels: print(f"Archived {dels} record{'s' if dels > 1 else ''}.")
+
                 tdb.db.serialise()
                 dates = [r.date for r in tdb.records.split_records(text)]
                 text = "".join([str(r) for r in tdb.records.split_db_records() if r.date in dates])
@@ -154,8 +163,8 @@ def main():
             if content == text:
                 print("no changes made")
                 return
-            if text:
-                tdb.records.add_record(text)
+            if text and tdb.records.add_record(text):
+                print("Record added successfully!")
             else:
                 print("No text provided. Record not added.")
         else:

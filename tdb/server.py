@@ -107,33 +107,43 @@ class TdbServer(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         response = {"ok": False}
+        code = 200
         try:
             db_lock.acquire()
             data_string = self.rfile.read(int(self.headers['Content-Length']))
             parsed = data_string.decode("utf-8")
             parsed = json.loads(parsed)
             if "/api/add.record" == self.path:
-                if "record" in parsed:
-                    tdb.records.add_record(parsed["record"])
+                if "text" in parsed:
+                    tdb.records.add_record(parsed["text"])
                     response["ok"] = True
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(bytes(json.dumps(response), "utf-8"))
+           
+            elif "/api/edit.record":
+                if "text" in parsed and "date" in parsed:
+                    options = tdb.cli.parse_options("web")
+                    options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]
+                    records = tdb.records.split_db_records(options)
+                    if len(records) == 1:
+                        cpy = tdb.records.Record(**records[0].asdict())
+                        cpy.text = parsed["text"]
+                        tdb.records.modify_db_records(records, [cpy])
+                        tdb.db.serialise()
+                        response["ok"] = True
+
             elif "/api/remove.record":
                 if "date" in parsed:
                     options = tdb.cli.parse_options("web")
                     options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]
                     records = tdb.records.split_db_records(options)
                     tdb.records.archive_records(records)
-                    response["ok"] = True
                     tdb.db.serialise()
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(bytes(json.dumps(response), "utf-8"))
-            else:
-                self.send_response(404)
-                self.end_headers()
-                self.wfile.write(bytes(json.dumps(response), "utf-8"))
+                    response["ok"] = True
+
+            else: code = 404
+
+            self.send_response(code)
+            self.end_headers()
+            self.wfile.write(bytes(json.dumps(response), "utf-8"))
 
         finally:
             db_lock.release()
