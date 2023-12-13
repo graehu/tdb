@@ -9,6 +9,19 @@ function httpGet(theUrl, callback) {
 	xmlHttp.send(null);
 };
 
+function httpPost(theUrl, data, callback) {
+	var xmlHttp = new XMLHttpRequest();
+	xmlHttp.onreadystatechange = function () {
+		if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+			callback(xmlHttp.responseText);
+		}
+	}
+	xmlHttp.open("POST", theUrl, true); // true for asynchronous 
+	xmlHttp.setRequestHeader("Content-Type", "application/json");
+	// console.log(data);
+	xmlHttp.send(data);
+};
+
 document.addEventListener("DOMContentLoaded", function () {
 	const input = document.querySelector("input");
 	if (input)
@@ -36,14 +49,37 @@ document.addEventListener("DOMContentLoaded", function () {
 						{
 							if (container.children[i].className == "entry")
 							{
+								var child = container.children[i];
 								var edit = document.createElement("button");
 								var remove = document.createElement("button");
 								edit.textContent = "edit";
 								remove.textContent = "remove";
-								edit.onclick = function () { console.log("clicked edit"); }; // /api/edit.record
-								remove.onclick = function () { console.log("clicked remove"); }; // /api/remove.record
-								container.children[i].appendChild(edit);
-								container.children[i].appendChild(remove);
+								edit.onclick = function (event)
+								{
+									var date = event.target.parentElement.querySelector(".date");
+									date = "'"+date.textContent.trim()+"'";
+									if (window.confirm("edit " + date + " to say poop?")) {
+										const url = window.origin + "/api/edit.record";
+										httpPost(url, JSON.stringify({ "date": date, "text": "poop" }), function (response) {
+											updateValue();
+										});
+									}
+								}; // /api/edit.record
+								remove.onclick = function (event)
+								{
+									var date = event.target.parentElement.querySelector(".date");
+									date = "'"+date.textContent.trim()+"'";
+									if (window.confirm("remove "+date+" from tdb?"))
+									{
+										const url = window.origin + "/api/remove.record";
+										httpPost(url, JSON.stringify({"date":date}), function(response) {
+												updateValue();
+										});
+									}
+
+								}; // /api/remove.record
+								child.appendChild(edit);
+								child.appendChild(remove);
 							}
 						}
 						if (mermaid) { mermaid.run(); }

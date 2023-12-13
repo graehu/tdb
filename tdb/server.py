@@ -108,6 +108,8 @@ class TdbServer(SimpleHTTPRequestHandler):
     def do_POST(self):
         response = {"ok": False}
         code = 200
+        headers = {}
+        headers["Content-Type"] = "text/json"
         try:
             db_lock.acquire()
             data_string = self.rfile.read(int(self.headers['Content-Length']))
@@ -118,32 +120,35 @@ class TdbServer(SimpleHTTPRequestHandler):
                     tdb.records.add_record(parsed["text"])
                     response["ok"] = True
            
-            elif "/api/edit.record":
+            elif "/api/edit.record" == self.path:
                 if "text" in parsed and "date" in parsed:
                     options = tdb.cli.parse_options("web")
                     options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]
                     records = tdb.records.split_db_records(options)
                     if len(records) == 1:
                         cpy = tdb.records.Record(**records[0].asdict())
-                        cpy.text = parsed["text"]
+                        cpy.text = parsed["text"] # TODO: The need to always add \n is annoying. text should be property a property and add it.
+                        if not cpy.text.endswith("\n"): cpy.text += "\n" 
                         tdb.records.modify_db_records(records, [cpy])
                         tdb.db.serialise()
                         response["ok"] = True
 
-            elif "/api/remove.record":
+            elif "/api/remove.record" == self.path:
                 if "date" in parsed:
                     options = tdb.cli.parse_options("web")
                     options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]
                     records = tdb.records.split_db_records(options)
-                    tdb.records.archive_records(records)
-                    tdb.db.serialise()
-                    response["ok"] = True
+                    if len(records) == 1:
+                        tdb.records.archive_records(records)
+                        tdb.db.serialise()
+                        response["ok"] = True
 
             else: code = 404
-
+            for k, v in headers.items():
+                self.send_header(k, v)
             self.send_response(code)
             self.end_headers()
-            self.wfile.write(bytes(json.dumps(response), "utf-8"))
+            self.wfile.write(bytes(json.dumps(response)+"\r\n", "utf-8"))
 
         finally:
             db_lock.release()
