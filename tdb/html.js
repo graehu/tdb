@@ -27,15 +27,15 @@ document.addEventListener("DOMContentLoaded", function () {
 	{
 		const container = document.getElementById("container");
 
-		input.addEventListener("input", updateValue);
+		input.addEventListener("input", updateRecords);
 		let searchParams = new URLSearchParams(window.location.search);
 		if (searchParams.get("opts"))
 		{
 			input.value = decodeURI(searchParams.get("opts"));
-			updateValue();
+			updateRecords();
 		}
 		
-		function updateValue(e=null) {
+		function updateRecords(e=null) {
 			if(input.value)
 			{
 				const url = window.origin + "/api/get.records"+"?opts="+encodeURI(input.value + " as:html_entries");
@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
 				httpGet(url, function (response) {
 					response = JSON.parse(response);
 					if (response["ok"]) {
+						const before_scroll = window.scrollY;
 						container.innerHTML = response["records"];
 						for(var i = 0; i < container.children.length; i++)
 						{
@@ -64,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
 									date = "'"+date.textContent.trim()+"'";
 									const url = window.origin + "/api/edit.record";
 									var text = JSON.stringify({"date":date,"text":content.textContent});
-									httpPost(url, text, function (response) {updateValue();});
+									httpPost(url, text, function (response, elem=event.target) { updateRecords(); });
 								}
 								const cancel_func = function (event)
 								{
@@ -72,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
 									event.target.edit_button.textContent = "edit";
 									event.target.onclick = remove_func;
 									event.target.edit_button.onclick = edit_func;
-									updateValue();
+									updateRecords();
 								}
 								const edit_func = function (event)
 								{
@@ -107,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
 									{
 										const url = window.origin + "/api/remove.record";
 										httpPost(url, JSON.stringify({"date":date}), function(response) {
-											updateValue();
+											updateRecords();
 										});
 									}
 									
@@ -121,6 +122,7 @@ document.addEventListener("DOMContentLoaded", function () {
 							}
 						}
 						if (mermaid) { mermaid.run(); }
+						window.scrollTo({ top: before_scroll });
 					}
 				});
 			}
