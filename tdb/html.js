@@ -52,14 +52,16 @@ document.addEventListener("DOMContentLoaded", function () {
 								var child = container.children[i];
 								var edit = document.createElement("button");
 								var remove = document.createElement("button");
-								edit.textContent = "edit";
-								remove.textContent = "remove";
+								edit.style = " border: 0; background: none; box-shadow: none; border-radius: 0px;";
+								remove.style = " border: 0; background: none; box-shadow: none; border-radius: 0px;";
+								edit.textContent = "✏️";
+								remove.textContent = "🗑️";
 								const save_func = function (event)
 								{
 									var date = event.target.parentElement.querySelector(".date");
 									var content = event.target.parentElement.querySelector(".content");
-									event.target.textContent = "edit";
-									event.target.remove_button = "remove";
+									event.target.textContent = "✏️";
+									event.target.remove_button.textContent = "🗑️";
 									event.target.remove_button.onclick = remove_func;
 									event.target.onclick = edit_func;
 									date = "'"+date.textContent.trim()+"'";
@@ -69,8 +71,8 @@ document.addEventListener("DOMContentLoaded", function () {
 								}
 								const cancel_func = function (event)
 								{
-									event.target.textContent = "remove";
-									event.target.edit_button.textContent = "edit";
+									event.target.textContent = "🗑️";
+									event.target.edit_button.textContent = "✏️";
 									event.target.onclick = remove_func;
 									event.target.edit_button.onclick = edit_func;
 									updateRecords();
@@ -86,8 +88,8 @@ document.addEventListener("DOMContentLoaded", function () {
 										if(response["ok"])
 										{
 											var content = event.target.parentElement.querySelector(".content");
-											event.target.textContent = "save";
-											event.target.remove_button.textContent = "cancel";
+											event.target.textContent = "💾";
+											event.target.remove_button.textContent = "❌";
 											event.target.remove_button.onclick = cancel_func;
 											event.target.onclick = save_func;
 											content.innerHTML = "";
