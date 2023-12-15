@@ -61,19 +61,17 @@ document.addEventListener("DOMContentLoaded", function () {
 									event.target.remove_button = "remove";
 									event.target.remove_button.onclick = remove_func;
 									event.target.onclick = edit_func;
-									content.contentEditable = false;
 									date = "'"+date.textContent.trim()+"'";
 									const url = window.origin + "/api/edit.record";
-									httpPost(url, JSON.stringify({ "date": date, "text": content.textContent }), function (response) {updateValue();});
+									var text = JSON.stringify({"date":date,"text":content.textContent});
+									httpPost(url, text, function (response) {updateValue();});
 								}
 								const cancel_func = function (event)
 								{
-									var content = event.target.parentElement.querySelector(".content");
 									event.target.textContent = "remove";
 									event.target.edit_button.textContent = "edit";
 									event.target.onclick = remove_func;
 									event.target.edit_button.onclick = edit_func;
-									content.contentEditable = false;
 									updateValue();
 								}
 								const edit_func = function (event)
@@ -94,11 +92,10 @@ document.addEventListener("DOMContentLoaded", function () {
 											content.innerHTML = "";
 											var pre = document.createElement("pre");
 											pre.style = "background: #eee;"
-											pre.id = "record_pre";
 											content.appendChild(pre);
 											const [first, ...rest] = response["records"].split("] ");
 											pre.textContent = rest.join("] ");
-											content.contentEditable = true;
+											pre.contentEditable = true;
 										}
 									});
 								}; // /api/edit.record
