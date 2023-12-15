@@ -1,4 +1,5 @@
 import shutil
+import pathlib
 import os
 
 _editors = ["notepad", "gedit -w", "code -w", "emacs -a \"\" -c", "subl -w"]
@@ -8,8 +9,19 @@ for editor in _editors:
         _editor = editor
         break
 
+_curdir = pathlib.Path(os.path.abspath(os.curdir))
 _tdb_dir = os.path.expanduser("~/.tdb")
+
+while _curdir != _curdir.parent:
+    if _curdir.joinpath(".tdb").exists():
+        _tdb_dir = str(_curdir.joinpath(".tdb"))
+        break
+    _curdir = _curdir.parent
+    pass
+
 _tdb_dir = _tdb_dir.replace("\\", "/")
+_curdir = os.path.abspath(os.curdir)
+
 _db_file = "/".join((_tdb_dir, "db.txt"))
 _db_archive = "/".join((_tdb_dir, "db_archive.txt"))
 _conf_file = "/".join((_tdb_dir, "config.toml"))
