@@ -18,7 +18,6 @@ function httpPost(theUrl, data, callback) {
 	}
 	xmlHttp.open("POST", theUrl, true); // true for asynchronous 
 	xmlHttp.setRequestHeader("Content-Type", "application/json");
-	// console.log(data);
 	xmlHttp.send(data);
 };
 
@@ -54,18 +53,56 @@ document.addEventListener("DOMContentLoaded", function () {
 								var remove = document.createElement("button");
 								edit.textContent = "edit";
 								remove.textContent = "remove";
-								edit.onclick = function (event)
+								const save_func = function (event)
+								{
+									var date = event.target.parentElement.querySelector(".date");
+									var content = event.target.parentElement.querySelector(".content");
+									event.target.textContent = "edit";
+									event.target.remove_button = "remove";
+									event.target.remove_button.onclick = remove_func;
+									event.target.onclick = edit_func;
+									content.contentEditable = false;
+									date = "'"+date.textContent.trim()+"'";
+									const url = window.origin + "/api/edit.record";
+									httpPost(url, JSON.stringify({ "date": date, "text": content.textContent }), function (response) {updateValue();});
+								}
+								const cancel_func = function (event)
+								{
+									var content = event.target.parentElement.querySelector(".content");
+									event.target.textContent = "remove";
+									event.target.edit_button.textContent = "edit";
+									event.target.onclick = remove_func;
+									event.target.edit_button.onclick = edit_func;
+									content.contentEditable = false;
+									updateValue();
+								}
+								const edit_func = function (event)
 								{
 									var date = event.target.parentElement.querySelector(".date");
 									date = "'"+date.textContent.trim()+"'";
-									if (window.confirm("edit " + date + " to say poop?")) {
-										const url = window.origin + "/api/edit.record";
-										httpPost(url, JSON.stringify({ "date": date, "text": "poop" }), function (response) {
-											updateValue();
-										});
-									}
+									const url = window.origin + "/api/get.records" + "?opts=" + encodeURI(date);
+									httpGet(url, function(response)
+									{
+										response = JSON.parse(response);
+										if(response["ok"])
+										{
+											var content = event.target.parentElement.querySelector(".content");
+											event.target.textContent = "save";
+											event.target.remove_button.textContent = "cancel";
+											event.target.remove_button.onclick = cancel_func;
+											event.target.onclick = save_func;
+											content.innerHTML = "";
+											var pre = document.createElement("pre");
+											pre.style = "background: #eee;"
+											pre.id = "record_pre";
+											content.appendChild(pre);
+											const [first, ...rest] = response["records"].split("] ");
+											pre.textContent = rest.join("] ");
+											content.contentEditable = true;
+										}
+									});
 								}; // /api/edit.record
-								remove.onclick = function (event)
+								const remove_func = function (event)
 								{
 									var date = event.target.parentElement.querySelector(".date");
 									date = "'"+date.textContent.trim()+"'";
@@ -73,11 +110,15 @@ document.addEventListener("DOMContentLoaded", function () {
 									{
 										const url = window.origin + "/api/remove.record";
 										httpPost(url, JSON.stringify({"date":date}), function(response) {
-												updateValue();
+											updateValue();
 										});
 									}
-
+									
 								}; // /api/remove.record
+								edit.onclick = edit_func;
+								edit.remove_button = remove;
+								remove.onclick = remove_func;
+								remove.edit_button = edit;
 								child.appendChild(edit);
 								child.appendChild(remove);
 							}
