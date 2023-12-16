@@ -1,5 +1,5 @@
 # tdb specific
-db.txt
+.tdb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
