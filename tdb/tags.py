@@ -56,7 +56,6 @@ def contains_tag(text, tag):
 
 
 def register_cmd(tag, func):
-    print(f"Registering '@{tag}' cmds.")
     _cmd_tags[tag] = func
 
 

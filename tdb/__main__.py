@@ -27,11 +27,12 @@ def import_addon(file_path):
     return None
 
 
-def import_addons():
+def import_addons(printout=False):
 
     if not tdb.config.get("addons"):
-        print(f"No addons found in '{tdb.config.get_filename()}'")
-        print("@tdb: commands will not work.")
+        if printout:
+            print(f"No addons found in '{tdb.config.get_filename()}'")
+            print("@tdb: commands will not work.")
         return
 
     for e in tdb.config.get("addons"):
@@ -40,10 +41,11 @@ def import_addons():
             mod_vars = vars(module)
             if "get_addon_name" in mod_vars:
                 if "addon_tag" in mod_vars:
+                    if printout: print(f"Registering '@{module.get_addon_name()}' cmds.")
                     tdb.tags.register_cmd(module.get_addon_name(), module.addon_tag)
                 if "addon_record" in mod_vars:
                     tdb.records.register_cmd(module.addon_record)
-            else:
+            elif printout:
                 print("failed to add '"+str(e)+"'. missing expected interface 'get_addon_name'.")
 
 
@@ -73,8 +75,8 @@ def main():
     edit_ext = tdb.config.get('edit_ext')
     edit_ext = edit_ext if edit_ext else ".txt"
     if command == "add":
-        import_addons()
         text = tdb.cli.get_text()
+        import_addons(printout=(text == ""))
         if not text:
             text = tdb.session.start("tdb_add", ext=edit_ext)
         if text:
