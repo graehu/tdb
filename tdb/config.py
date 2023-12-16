@@ -20,7 +20,8 @@ while _curdir != _curdir.parent:
     pass
 
 _tdb_dir = _tdb_dir.replace("\\", "/")
-_curdir = os.path.abspath(os.curdir)
+_curdir = "/".join((_tdb_dir, os.pardir))
+os.chdir(_curdir)
 
 _db_file = "/".join((_tdb_dir, "db.txt"))
 _db_archive = "/".join((_tdb_dir, "db_archive.txt"))
