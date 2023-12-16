@@ -83,6 +83,7 @@ def main():
             tdb.records.add_record(text)
         else:
             print("No text provided. Record not added.")
+            sys.exit(1)
 
     elif command == "show":
         tdb.records.print_records(options)
