@@ -250,7 +250,7 @@ def print_records(options=None):
 
 
 def filter_records(records : list, options : list):
-    max_id = len(records)-1
+    max_id = len(records)
     filtered = records.copy()
 
     dates = options["dates"] if options else []
@@ -265,12 +265,12 @@ def filter_records(records : list, options : list):
     if span:
         if all(map(lambda x: isinstance(x, int), span)):
             span = sorted([span[0], span[0]+span[1]])
-            span[0] = min(max(0, span[0]+max_id+1), max_id)
-            span[1] = min(max(0, span[1]+max_id+1), max_id)
+            span[0] = min(max(0, span[0]+max_id), max_id)
+            span[1] = min(max(0, span[1]+max_id), max_id)
             filtered = filtered[span[0]:span[1]]
 
         elif isinstance(span[0], int):
-            span[0] = min(max(0, span[0]+max_id+1), max_id)
+            span[0] = min(max(0, span[0]+max_id), max_id)
             filtered = filtered[span[0]:]
             span[1] = next((i for i,v in enumerate(filtered) if v.date >= span[1]), max_id)
             filtered = filtered[:span[1]+span[0]]
