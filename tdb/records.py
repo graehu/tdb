@@ -249,9 +249,9 @@ def print_records(options=None):
     #TODO: the way tags are colourised should really be informed from the tdb configs
     if out := stringify_db_records(options):
         if tdb.cli.isatty():
-            cols = [getattr(tdb.cli.Colours, c) for c in dir(tdb.cli.Colours) if c in tdb.tags._colours]
-            for num,tag in enumerate(tdb.tags.find_tags(out)):
-                out = out.replace("@"+tag[0], cols[num%len(cols)]+"@"+tag[0]+tdb.cli.Colours.END)
+            for tag in tdb.tags.find_tags(out):
+                col = getattr(tdb.cli.Colours, tdb.tags.get_colour(tag[0]))
+                out = out.replace("@"+tag[0], col+"@"+tag[0]+tdb.cli.Colours.END)
         print(out)
 
 
@@ -357,6 +357,7 @@ def split_records(text: str):
             x,y = last["span"][1], current["span"][0]
             section = text[x:y]
             tags = tdb.tags.find_tags(section.lower())
+            tdb.tags.register(tags)
             last["text"] = section
             last["tags"] = tags
             last["span"] = (x ,y)

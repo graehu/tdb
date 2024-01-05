@@ -2,8 +2,19 @@ import re
 
 re_tag = re.compile(r'\s@(\w+)')
 _cmd_tags = {}
+_registered_tags = {}
+_colours = ["RED", "GREEN", "BROWN", "BLUE", "PURPLE", "CYAN", "LIGHT_RED", "LIGHT_GREEN", "YELLOW", "LIGHT_BLUE", "LIGHT_PURPLE", "LIGHT_CYAN"]
 
-_colours = ["RED", "GREEN", "BROWN", "BLUE", "PURPLE", "CYAN", "LIGHT_RED", "LIGHT_GREEN", "YELLOW", "LIGHT_BLUE", "LIGHT_PURPLE", "LIGHT_CYAN"] 
+
+def register(tags):
+    for tag in tags:
+        if not tag[0] in _registered_tags:
+            _registered_tags[tag[0]] = {"colour": _colours[len(_registered_tags)%len(_colours)]}
+
+
+def get_colour(tag):
+    return _registered_tags[tag]["colour"]
+
 
 def _safe_re_search(string, position, pattern) -> int:
     match = pattern.search(string, position)
