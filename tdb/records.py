@@ -246,7 +246,13 @@ def stringify_records(records:list, options:dict=None):
 
 
 def print_records(options=None):
-    if out := stringify_db_records(options): print(out)
+    #TODO: the way tags are colourised should really be informed from the tdb configs
+    if out := stringify_db_records(options):
+        if tdb.cli.isatty():
+            cols = [getattr(tdb.cli.Colours, c) for c in dir(tdb.cli.Colours) if c in tdb.tags._colours]
+            for num,tag in enumerate(tdb.tags.find_tags(out)):
+                out = out.replace("@"+tag[0], cols[num%len(cols)]+"@"+tag[0]+tdb.cli.Colours.END)
+        print(out)
 
 
 def filter_records(records : list, options : list):

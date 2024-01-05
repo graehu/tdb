@@ -3,6 +3,8 @@ import re
 re_tag = re.compile(r'\s@(\w+)')
 _cmd_tags = {}
 
+_colours = ["RED", "GREEN", "BROWN", "BLUE", "PURPLE", "CYAN", "LIGHT_RED", "LIGHT_GREEN", "YELLOW", "LIGHT_BLUE", "LIGHT_PURPLE", "LIGHT_CYAN"] 
+
 def _safe_re_search(string, position, pattern) -> int:
     match = pattern.search(string, position)
     return match.span()[0] if match else -1
