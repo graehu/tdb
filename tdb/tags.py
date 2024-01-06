@@ -1,19 +1,25 @@
 import re
+import tdb.config
 
 re_tag = re.compile(r'\s@(\w+)')
 _cmd_tags = {}
-_registered_tags = {}
-_colours = ["RED", "GREEN", "BROWN", "BLUE", "PURPLE", "CYAN", "LIGHT_RED", "LIGHT_GREEN", "YELLOW", "LIGHT_BLUE", "LIGHT_PURPLE", "LIGHT_CYAN"]
+_colours = ["red", "green", "brown", "blue", "purple", "cyan", "light_red", "light_green", "yellow", "light_blue", "light_purple", "light_cyan"]
 
+_config = tdb.config.get("tags", {})
 
 def register(tags):
     for tag in tags:
-        if not tag[0] in _registered_tags:
-            _registered_tags[tag[0]] = {"colour": _colours[len(_registered_tags)%len(_colours)]}
+        if not tag[0] in _config:
+            _config[tag[0]] = {"colour": _colours[len(_config)%len(_colours)]}
 
 
-def get_colour(tag):
-    return _registered_tags[tag]["colour"]
+def get_colour(tag) -> str:
+    col = _config[tag]["colour"]
+    if not col in _colours:
+        print(f"warning: '{tag}' has invalid colour '{col}'")
+        col = "light_cyan"
+        _config[tag]["colour"] = col
+    return col
 
 
 def _safe_re_search(string, position, pattern) -> int:

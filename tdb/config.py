@@ -38,7 +38,11 @@ edit_ext = ".md"
 # options: {_editors}
 editor = "{_editor}" # command for editor
 addons = ["{_addon_file}"]
+"""+"""
+[tags]
+bug = {colour = "red"}
 """
+
 
 os.makedirs(_tdb_dir, exist_ok=True)
 
@@ -47,9 +51,13 @@ if not os.path.exists(_conf_file): open(_conf_file, "w").write(_conf_text)
 
 def get_tdb_dir(): return _tdb_dir
 def get_filename(): return _conf_file
-def get(key):
+def _init():
     global _config
     if not _config:
         import tomllib
         _config = tomllib.load(open(_conf_file, "rb"))
-    return _config.get(key)
+
+def get(key, default=None):
+    _init()
+    if key in _config: default = _config.get(key)
+    return default
