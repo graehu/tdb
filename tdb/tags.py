@@ -3,21 +3,21 @@ import tdb.config
 
 re_tag = re.compile(r'\s@(\w+)')
 _cmd_tags = {}
-_colours = ["red", "green", "brown", "blue", "purple", "cyan", "light_red", "light_green", "yellow", "light_blue", "light_purple", "light_cyan"]
+_colours = ["red", "green", "brown", "blue", "purple", "cyan", "light_red", "light_green", "yellow", "light_blue", "light_purple", "light_cyan", "light_white"]
 
 _config = tdb.config.get("tags", {})
 
 def register(tags):
     for tag in tags:
         if not tag[0] in _config:
-            _config[tag[0]] = {"colour": _colours[len(_config)%len(_colours)]}
+            _config[tag[0]] = {"colour": "light_white"}
 
 
 def get_colour(tag) -> str:
     col = _config[tag]["colour"]
     if not col in _colours:
         print(f"warning: '{tag}' has invalid colour '{col}'")
-        col = "light_cyan"
+        col = "light_white"
         _config[tag]["colour"] = col
     return col
 
