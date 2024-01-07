@@ -3,12 +3,12 @@
 A text based database with tagging.
 
 ```
-Usage: py -m tdb [add | edit | remove | template | show | open | listen] [text | options]
+Usage: py -m tdb [add | edit | rm | template | show | open | listen] [text | options]
 ----------------------------------------------------------------
 Commands:
 add:            Make a record when text is supplied. Otherwise, open an editor to write one.
 edit:           Open an editor with some view of the database, see options.
-remove:         Move matching records to the archive.
+rm:         Move matching records to the archive.
 template:       Open an editor to write a record with the passed template file as a basis.
 open:           Open tdbs files: tdb open ['archive', 'config', 'db']
 listen:         Starts a server listening on passed port.

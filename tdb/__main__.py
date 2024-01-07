@@ -52,12 +52,12 @@ def import_addons(printout=False):
 def main():
     if len(sys.argv) < 2 or "--help" in sys.argv or sys.argv[1] == "help":
         print("# tdb\n\nA text based database with tagging.\n\n```")
-        print("Usage: py -m tdb [add | edit | remove | template | show | open | listen] [text | options]")
+        print("Usage: py -m tdb [add | edit | rm | template | show | open | listen] [text | options]")
         print("".ljust(64,"-"))
         print("Commands:")
         print("add:".ljust(16)+"Make a record when text is supplied. Otherwise, open an editor to write one.")
         print("edit:".ljust(16)+"Open an editor with some view of the database, see options.")
-        print("remove:".ljust(16)+"Move matching records to the archive.")
+        print("rm:".ljust(16)+"Move matching records to the archive.")
         print("template:".ljust(16)+"Open an editor to write a record with the passed template file as a basis.")
         print("open:".ljust(16)+"Open tdbs files: tdb open ['archive', 'config', 'db']")
         print("listen:".ljust(16)+"Starts a server listening on passed port.")
@@ -96,7 +96,7 @@ def main():
             print("can't open '"+" ".join(sys.argv[2:])+"'.\noptions: 'config', 'db', or 'archive'")
             sys.exit(1)
     
-    elif command == "remove":
+    elif command == "rm":
         if options:
             records = tdb.records.split_db_records(options)
             if records:
