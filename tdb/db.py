@@ -79,7 +79,21 @@ def append(text):
         text = '\n'+text
     insert(text, len(_db_text), len(_db_text))
 
-def append_immediate(text): open(get_filename(), "a").write(text)
+
+def append_fileline(text, path):
+    f = open(path, "a+")
+    f.seek(0, os.SEEK_END)
+    f.seek(max(0, f.tell()-1)) # potential utf-8 issues
+    if f.read() != '\n' and text[0] != '\n':
+        f.write('\n'+text)
+    else:
+        f.write(text)
+    f.close()
+
+
+def append_immediate(text):
+    append_fileline(text, get_filename())
+    
 
 def replace(old, new):
     global _db_inserts
@@ -90,7 +104,7 @@ def replace(old, new):
         insert(new, id, id+len(old))
 
 def archive(text, remove=True):
-    open(get_archive(), "a").write(text)
+    append_fileline(text, get_archive())
     if remove: replace(text, "")
 
 

@@ -78,7 +78,7 @@ def register_cmd(func):
 
 
 def make_record(date, text):
-    return f"\n[tdb:{date}] {text}"
+    return f"[tdb:{date}] {text}"
 
 
 def add_record(text):
