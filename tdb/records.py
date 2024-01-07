@@ -230,7 +230,12 @@ def stringify_records(records:list, options:dict=None):
     elif options and options["as"] == "html_entries":
         out = tdb.html.build_html_entries(list(reversed(records)))
     elif options and options["as"] == "list":
-        out = "".join([str(r).splitlines()[0]+"\n" for r in records])
+        def list_line(record):
+            line = str(record).splitlines()[0]
+            for t, _ in record.tags:
+                if not "@"+t in line: line += " @"+t 
+            return line+"\n"
+        out = "".join([list_line(r) for r in records])
         out = out.strip()
     elif options and options["as"] == "tags":
         tags = {}
