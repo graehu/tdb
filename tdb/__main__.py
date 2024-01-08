@@ -86,7 +86,7 @@ def main():
             sys.exit(1)
 
     elif command == "show":
-        tdb.records.print_records(options)
+        tdb.records.print_db_records(options)
 
     elif command == "open":
         if "config" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
@@ -100,7 +100,7 @@ def main():
         if options:
             records = tdb.records.split_db_records(options)
             if records:
-                print(tdb.records.stringify_records(records, {"as":"list"}))
+                tdb.records.print_records(records, {"as":"list"})
                 while True:
                     response = input(f"Archive {len(records)} record{'s' if len(records) > 1 else ''}? (y/n): ").lower()
                     if response in ["yes", "y"]: response = True

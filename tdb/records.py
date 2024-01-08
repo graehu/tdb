@@ -250,13 +250,18 @@ def stringify_records(records:list, options:dict=None):
     return out
 
 
-def print_records(options=None):
-    if out := stringify_db_records(options):
+def print_records(records, options=None):
+    if out := stringify_records(records, options):
         if tdb.cli.isatty():
             for tag in tdb.tags.find_tags(out):
                 col = getattr(tdb.cli.ANSICodes, tdb.tags.get_colour(tag[0]))
                 out = out.replace("@"+tag[0], col+"@"+tag[0]+tdb.cli.ANSICodes.end)
         print(out)
+
+
+def print_db_records(options=None):
+    if records := split_db_records(options):
+        print_records(records, options)
 
 
 def filter_records(records : list, options : list):
