@@ -29,14 +29,25 @@ class ANSICodes:
     blink = "\033[5m"
     negative = "\033[7m"
     crossed = "\033[9m"
-    end = "\033[0m" 
+    end = "\033[0m"
 
 
-if platform.system == "Windows":
-    kernel32 = __import__("ctypes").windll.kernel32
-    kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-    del kernel32
+def enable_ansi():
+    kernel32 = ctypes.windll.kernel32
+    ENABLE_PROCESSED_OUTPUT = 0x0001
+    ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+    out_handle = kernel32.GetStdHandle(subprocess.STD_OUTPUT_HANDLE)
+    # GetConsoleMode fails if the terminal isn't native.
+    mode = ctypes.c_int32()
+    if kernel32.GetConsoleMode(out_handle, ctypes.byref(mode)) == 0: return
+    if not (mode.value & ENABLE_VIRTUAL_TERMINAL_PROCESSING):
+        kernel32.SetConsoleMode(out_handle, mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT)
 
+
+if platform.system() == "Windows":
+    import ctypes
+    enable_ansi()
+    
 
 def isatty():
     return sys.stdout.isatty()

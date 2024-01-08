@@ -48,10 +48,10 @@ def find_tags(text: str):
             end = _safe_re_search(text, start, re_end)
             if end == -1: end = len(text)
             tag_spans.append((start, end))
-            tags.append((tag, text[start:end].strip()))
+            tags.append((tag.lower(), text[start:end].strip()))
             
         elif not skip:
-            tags.append((tag, ""))
+            tags.append((tag.lower(), ""))
 
     return tags
 
