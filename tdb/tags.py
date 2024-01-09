@@ -1,7 +1,26 @@
 import re
+import tdb.config
 
 re_tag = re.compile(r'\s@(\w+)')
 _cmd_tags = {}
+_colours = ["red", "green", "brown", "blue", "purple", "cyan", "light_red", "light_green", "yellow", "light_blue", "light_purple", "light_cyan", "light_white"]
+
+_config = tdb.config.get("tags", {})
+
+def register(tags):
+    for tag in tags:
+        if not tag[0] in _config:
+            _config[tag[0]] = {"colour": "light_white"}
+
+
+def get_colour(tag) -> str:
+    col = _config[tag]["colour"]
+    if not col in _colours:
+        print(f"warning: '{tag}' has invalid colour '{col}'")
+        col = "light_white"
+        _config[tag]["colour"] = col
+    return col
+
 
 def _safe_re_search(string, position, pattern) -> int:
     match = pattern.search(string, position)
@@ -29,10 +48,10 @@ def find_tags(text: str):
             end = _safe_re_search(text, start, re_end)
             if end == -1: end = len(text)
             tag_spans.append((start, end))
-            tags.append((tag, text[start:end].strip()))
+            tags.append((tag.lower(), text[start:end].strip()))
             
         elif not skip:
-            tags.append((tag, ""))
+            tags.append((tag.lower(), ""))
 
     return tags
 
@@ -56,7 +75,6 @@ def contains_tag(text, tag):
 
 
 def register_cmd(tag, func):
-    print(f"Registering '@{tag}' cmds.")
     _cmd_tags[tag] = func
 
 

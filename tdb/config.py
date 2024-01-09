@@ -1,4 +1,5 @@
 import shutil
+import pathlib
 import os
 
 _editors = ["notepad", "gedit -w", "code -w", "emacs -a \"\" -c", "subl -w"]
@@ -8,8 +9,20 @@ for editor in _editors:
         _editor = editor
         break
 
+_curdir = pathlib.Path(os.path.abspath(os.curdir))
 _tdb_dir = os.path.expanduser("~/.tdb")
+
+while _curdir != _curdir.parent:
+    if _curdir.joinpath(".tdb").exists():
+        _tdb_dir = str(_curdir.joinpath(".tdb"))
+        break
+    _curdir = _curdir.parent
+    pass
+
 _tdb_dir = _tdb_dir.replace("\\", "/")
+_curdir = "/".join((_tdb_dir, os.pardir))
+os.chdir(_curdir)
+
 _db_file = "/".join((_tdb_dir, "db.txt"))
 _db_archive = "/".join((_tdb_dir, "db_archive.txt"))
 _conf_file = "/".join((_tdb_dir, "config.toml"))
@@ -25,7 +38,11 @@ edit_ext = ".md"
 # options: {_editors}
 editor = "{_editor}" # command for editor
 addons = ["{_addon_file}"]
+"""+"""
+[tags]
+bug = {colour = "red"}
 """
+
 
 os.makedirs(_tdb_dir, exist_ok=True)
 
@@ -34,9 +51,13 @@ if not os.path.exists(_conf_file): open(_conf_file, "w").write(_conf_text)
 
 def get_tdb_dir(): return _tdb_dir
 def get_filename(): return _conf_file
-def get(key):
+def _init():
     global _config
     if not _config:
         import tomllib
         _config = tomllib.load(open(_conf_file, "rb"))
-    return _config.get(key)
+
+def get(key, default=None):
+    _init()
+    if key in _config: default = _config.get(key)
+    return default

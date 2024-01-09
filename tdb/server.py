@@ -13,6 +13,7 @@ import os
 import webbrowser
 
 db_lock = threading.Lock()
+opt_overrides = {}
 running = True
 
 class TdbServer(SimpleHTTPRequestHandler):
@@ -41,7 +42,10 @@ class TdbServer(SimpleHTTPRequestHandler):
             
             options = ("web "+urllib.parse.unquote(queries["opts"])) if "opts" in queries else ""
             options = tdb.cli.parse_options(options)
-            # print("parsed options: "+str(options))
+
+            for k in options:
+                if isinstance(options[k], list) and k in opt_overrides: options[k] += opt_overrides[k]
+                elif k in opt_overrides and opt_overrides[k]: options[k] = opt_overrides[k]
 
             response = {"ok": False}
             headers = {}
@@ -49,7 +53,7 @@ class TdbServer(SimpleHTTPRequestHandler):
 
             if "/api/get.records" == self.path:
                 response["ok"] = True
-                response["records"] = tdb.records.stringify_records(options)
+                response["records"] = tdb.records.stringify_db_records(options)
             elif "/api/get.tags" == self.path:
                 print("getting tags")
                 response["ok"] = True
@@ -103,25 +107,51 @@ class TdbServer(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         response = {"ok": False}
-        if "/api/add.record" == self.path:
-            try:
-                db_lock.acquire()
-                data_string = self.rfile.read(int(self.headers['Content-Length']))
-                parsed = data_string.decode("utf-8")
-                parsed = json.loads(parsed)
-                if "record" in parsed:
-                    tdb.records.add_record(parsed["record"])
+        code = 200
+        headers = {}
+        headers["Content-Type"] = "text/json"
+        try:
+            db_lock.acquire()
+            data_string = self.rfile.read(int(self.headers['Content-Length']))
+            parsed = data_string.decode("utf-8")
+            parsed = json.loads(parsed)
+            if "/api/add.record" == self.path:
+                if "text" in parsed:
+                    tdb.records.add_record(parsed["text"])
                     response["ok"] = True
-            finally:
-                db_lock.release()
-                pass
-            self.send_response(200)
+           
+            elif "/api/edit.record" == self.path:
+                if "text" in parsed and "date" in parsed:
+                    options = tdb.cli.parse_options("web")
+                    options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]
+                    records = tdb.records.split_db_records(options)
+                    if len(records) == 1:
+                        cpy = tdb.records.Record(**records[0].asdict())
+                        cpy.text = parsed["text"] # TODO: The need to always add \n is annoying. text should be property a property and add it.
+                        if not cpy.text.endswith("\n"): cpy.text += "\n" 
+                        tdb.records.modify_db_records(records, [cpy])
+                        tdb.db.serialise()
+                        response["ok"] = True
+
+            elif "/api/remove.record" == self.path:
+                if "date" in parsed:
+                    options = tdb.cli.parse_options("web")
+                    options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]
+                    records = tdb.records.split_db_records(options)
+                    if len(records) == 1:
+                        tdb.records.archive_records(records)
+                        tdb.db.serialise()
+                        response["ok"] = True
+
+            else: code = 404
+            for k, v in headers.items():
+                self.send_header(k, v)
+            self.send_response(code)
             self.end_headers()
-            self.wfile.write(bytes(json.dumps(response), "utf-8"))
-        else:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(bytes(json.dumps(response), "utf-8"))
+            self.wfile.write(bytes(json.dumps(response)+"\r\n", "utf-8"))
+
+        finally:
+            db_lock.release()
 
 
 def _get_best_family(*address):
@@ -134,8 +164,11 @@ def _get_best_family(*address):
     return family, sockaddr
 
 
-def start_server(port=8000):
+def start_server(port=8000, options={}):
     global running
+    global opt_overrides
+
+    opt_overrides = options if options else {}
     # ensure dual-stack is not disabled; ref #38907
     class DualStackServer(ThreadingHTTPServer):
         def server_bind(self):

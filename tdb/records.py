@@ -43,13 +43,10 @@ def convert_headers(text):
 class Record(object):
     text = ""
     time = 0
-    delta = 0
     date = None
     tags = []
     span = (0,0)
-    pos = 0
-    id = -1
-    def __init__(self, text, time, delta, date, tags, span, pos, id):
+    def __init__(self, text, time, date, tags, span):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -58,9 +55,6 @@ class Record(object):
         self.tags = tags
         self.span = span
         self.time = time
-        self.delta = delta
-        self.id = id
-        self.pos = pos
 
     def __str__(self):
         if _force_hex:
@@ -74,7 +68,7 @@ class Record(object):
         return f"[tdb:{hex(self.time)}] {self.text}"
     
     def asdict(self):
-        return {'text': self.text, 'time': self.time, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span, 'id':self.id }
+        return {'text': self.text, 'time': self.time, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span }
 
 
 def register_cmd(func):
@@ -84,7 +78,7 @@ def register_cmd(func):
 
 
 def make_record(date, text):
-    return f"\n[tdb:{date}] {text}"
+    return f"[tdb:{date}] {text}"
 
 
 def add_record(text):
@@ -99,8 +93,8 @@ def add_record(text):
     tdb.db.append_immediate(record)
     tdb.db.archive(record, False)
 
-    print("Record added successfully!")
     for r in _record_cmds: r(text)
+    return True
 
 
 def deduplicate_records(in_records):
@@ -113,9 +107,7 @@ def deduplicate_records(in_records):
     return dedupe
 
 
-def modify_db_records(previous, current):
-    records = split_records(previous)
-    new_records = split_records(current)
+def modify_db_records(old_records:list, new_records:list):
     dedupe = deduplicate_records(new_records)
     if len(new_records) != len(dedupe): print("Warning: duplicate dates found. Ignoring those entries.")
     new_records = dedupe
@@ -124,7 +116,7 @@ def modify_db_records(previous, current):
     for r1 in new_records:
         modified = None
         new = True
-        for r2 in records:
+        for r2 in old_records:
             if str(r1) != str(r2) and r1.iso_str() == r2.iso_str():
                 modified = r2
                 found.append(r2)
@@ -139,22 +131,24 @@ def modify_db_records(previous, current):
             tdb.db.replace(r2.entry(), r1.entry()); mods += 1
         elif new:
             # print(f"new: {r1}")
-            # for r2 in records:
+            # for r2 in old_records:
             #     print((r1.iso_str()," != ",r2.iso_str()))
             tdb.db.append(r1.entry()); adds+=1
             pass
-    for r1 in records:
+    for r1 in old_records:
         if not r1 in found:
             # print(f"del: {r1}")
             tdb.db.archive(r1.entry()); dels+=1
             pass
     
-    if adds or mods or dels: print("".ljust(32, "="))
-    if adds: print(f"Inserted {adds} record{'s' if adds > 1 else ''}.")
-    if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
-    if dels: print(f"Archived {dels} record{'s' if dels > 1 else ''}.")
-    
-    for r in _record_cmds: r(current)
+    for r in _record_cmds: r("".join(map(str,new_records)))
+    return adds, mods, dels
+
+def archive_records(records: list):
+    if records:
+        for r1 in records: tdb.db.archive(r1.entry())
+        return True
+    return False
 
 
 def merge_records(text_head, text_a, text_b):
@@ -220,38 +214,64 @@ def merge_records(text_head, text_a, text_b):
 
 tdb.db._db_merge_func = merge_records
 
-def stringify_records(options=None):
-    results = []
-    results = split_db_records(options)
+
+def stringify_db_records(options:dict=None):
+    records = split_db_records(options)
+    return stringify_records(records, options)
+
+
+def stringify_records(records:list, options:dict=None):
     out = ""
-    if options and options["format"] == "json":
-        res = [r.asdict() for r in results]
+    if options and options["as"] == "json":
+        res = [r.asdict() for r in records]
         out = json.dumps(res, indent=2)
-    elif options and options["format"] == "html":
-        out = tdb.html.build_html(reversed([r.asdict() for r in results]))
-    elif options and options["format"] == "html_entries":
-        out = tdb.html.build_html_entries(reversed([r.asdict() for r in results]))
-    elif options and options["format"] == "short":
-        out = "".join([str(r).splitlines()[0]+"\n" for r in results])
+    elif options and options["as"] == "html":
+        out = tdb.html.build_html(list(reversed(records)))
+    elif options and options["as"] == "html_entries":
+        out = tdb.html.build_html_entries(list(reversed(records)))
+    elif options and options["as"] == "list":
+        def list_line(record):
+            line = str(record).splitlines()[0]
+            for t, _ in record.tags:
+                if not "@"+t in line: line += " @"+t 
+            return line+"\n"
+        out = "".join([list_line(r) for r in records])
         out = out.strip()
-        print(out.strip())
+    elif options and options["as"] == "tags":
+        tags = {}
+        for r in records:
+            for t in r.tags:
+                if t[0] in tags: tags[t[0]] += 1
+                else: tags[t[0]] = 1
+        out = json.dumps(tags, indent=2)
     else:
-        out = "".join([str(r) for r in results])
+        out = "".join([str(r) for r in records])
         out = out.strip()
     return out
 
 
-def print_records(options=None):
-    print(stringify_records(options))
+def print_records(records, options=None):
+    if out := stringify_records(records, options):
+        if tdb.cli.isatty():
+            for tag in tdb.tags.find_tags(out):
+                col = getattr(tdb.cli.ANSICodes, tdb.tags.get_colour(tag[0]))
+                out = out.replace("@"+tag[0], col+"@"+tag[0]+tdb.cli.ANSICodes.end)
+            # TODO: the [tdb:\1] here feels like it could be done better. Also, config colour for tdb header?
+            out = re_iso_record.sub(tdb.cli.ANSICodes.light_white+r"[tdb:\1] "+tdb.cli.ANSICodes.end, out)
+        print(out)
 
 
-def filter_records(records, options):
+def print_db_records(options=None):
+    if records := split_db_records(options):
+        print_records(records, options)
+
+
+def filter_records(records : list, options : list):
     max_id = len(records)
-    id_offset = -1
-    out = []
-    end_date = None
+    filtered = records.copy()
 
-    span = options["span"] if options else []
+    dates = options["dates"] if options else []
+    span = options["span"].copy() if options else []
     otags = options["otags"] if options else []
     ntags = options["ntags"] if options else []
     atags = options["atags"] if options else []
@@ -259,53 +279,54 @@ def filter_records(records, options):
     ocontains = options["ocontains"] if options else []
     ncontains = options["ncontains"] if options else []
 
-    # TODO: id's should be linear by this point
-    # optimizations like:
-    # > if all(map(lambda x: isinstance(x, int), span)): records[span[0]:span[1]]
-    # should be very possible.
-    # for date ranged, just break when you leave the range.
+    if span:
+        if all(map(lambda x: isinstance(x, int), span)):
+            span = sorted([span[0], span[0]+span[1]])
+            span[0] = min(max(0, span[0]+max_id), max_id)
+            span[1] = min(max(0, span[1]+max_id), max_id)
+            filtered = filtered[span[0]:span[1]]
 
-    for record in records:
-        date = record.date
+        elif isinstance(span[0], int):
+            span[0] = min(max(0, span[0]+max_id), max_id)
+            filtered = filtered[span[0]:]
+            span[1] = next((i for i,v in enumerate(filtered) if v.date >= span[1]), max_id)
+            filtered = filtered[:span[1]+span[0]]
+
+        elif isinstance(span[1], int):
+            span[0] = next((i for i,v in enumerate(filtered) if v.date >= span[0]), max_id)
+            span[1] = min(max(0, span[0]+span[1]), span[1])
+            span = sorted([span[0],span[0]+span[1]])
+            filtered = filtered[span[0]:span[1]]
+        else:
+            filtered = [r for r in filtered if span[0] <= r.date <= span[1]]
+    
+    if dates:
+        def date_compare(a:datetime, b:datetime):
+            return (
+             (a.year == b.year or a.year == 0 or b.year == 0) and
+             (a.month == b.month or a.month == 0 or b.month == 0) and
+             (a.day == b.day or a.day == 0 or b.day == 0) and
+             (a.hour == b.hour or a.hour == 0 or b.hour == 0) and
+             (a.minute == b.minute or a.minute == 0 or b.minute == 0) and
+             (a.second == b.second or a.second == 0 or b.second == 0) and
+             (a.microsecond == b.microsecond or a.microsecond == 0 or b.microsecond == 0)
+             )
+        
+        filtered = [r for r in filtered if any([date_compare(r.date, d) for d in dates])]
+    
+    out = [] 
+    for record in filtered:
         low_text = record.text.lower()
+        flat_tags = [x[0] for x in record.tags]
         skip = False
-        if not skip and span:
-            skip = True
-
-            if all(map(lambda x: isinstance(x, int), span)):
-                skip = not (max_id+span[0] < record.id <= max_id+span[0]+span[1])
-
-            elif isinstance(span[0], int):
-                if span[0] < 0 and (max_id+span[0]) < record.id:
-                    if not end_date:
-                        if isinstance(span[1], datetime): end_date = span[1]
-                        else: end_date = record.date + span[1]
-                    skip = not (date <= end_date)
-                else: assert("we're not doing dates in the future")
-
-            elif isinstance(span[1], int):
-
-                if span[1] >= 0 and date >= span[0]:
-                    if id_offset == -1: id_offset = record.id
-                    skip = not ((record.id - id_offset) < span[1])
-                
-                elif span[1] < 0 and date <= span[0]:
-                    if id_offset == -1: id_offset = record.id
-                    skip = not (abs(record.id-id_offset) < abs(span[1]))
-                
-                else:
-                    skip = span[1] >= 0 and date <= span[0]
-
-            elif span[0] <= date <= span[1]: skip = False
-
         if not skip and ocontains: skip = not any([c in low_text for c in ocontains])
         if not skip and acontains: skip = not all([c in low_text for c in acontains])
         if not skip and ncontains: skip = any([c in low_text for c in ncontains])
-        if not skip and otags: skip = not any([tdb.tags.contains_tag(low_text, t) for t in otags])
-        if not skip and atags: skip = not all([tdb.tags.contains_tag(low_text, t) for t in atags])
-        if not skip and ntags: skip = any([tdb.tags.contains_tag(low_text, t) for t in ntags])
+        if not skip and otags: skip = not any([t in flat_tags for t in otags])
+        if not skip and atags: skip = not all([t in flat_tags for t in atags])
+        if not skip and ntags: skip = any([t in flat_tags for t in ntags])
         if not skip: out.append(record)
-    
+
     return out
 
 
@@ -331,83 +352,39 @@ def split_db_records(options=None):
     else: return _record_cache
 
 
-def split_records(text: str, options=None):
+def split_records(text: str):
     global _needs_sort
     text = convert_headers(text)
     last = None
     current = None
-    id = 0
-    id_offset = -1
-
-    filtered = []
-
-    otags = options["otags"] if options else []
-    ntags = options["ntags"] if options else []
-    atags = options["atags"] if options else []
-    span = options["span"] if options else []
-    acontains = options["acontains"] if options else []
-    ocontains = options["ocontains"] if options else []
-    ncontains = options["ncontains"] if options else []
+    records = []
 
     def append_record():
-        nonlocal filtered
+        nonlocal records
         nonlocal last
         nonlocal current
-        nonlocal id
-        nonlocal id_offset
 
         if last:
-            id += 1
             x,y = last["span"][1], current["span"][0]
             section = text[x:y]
-            date = last["date"]
+            tags = tdb.tags.find_tags(section.lower())
+            tdb.tags.register(tags)
             last["text"] = section
+            last["tags"] = tags
             last["span"] = (x ,y)
-            last["id"] = id
-
-
-            skip = False
-            if not skip and span:
-                skip = True
-
-                if all(map(lambda x: isinstance(x, int), span)): skip = False
-                elif isinstance(span[0], int): skip = False
-                elif isinstance(span[1], int):
-
-                    if span[1] >= 0 and date >= span[0]:
-                        if id_offset == -1: id_offset = id
-                        skip = not (id - id_offset) < span[1]
-                    else:
-                        skip = span[1] >= 0 and date <= span[0]
-
-                elif span[0] <= date <= span[1]: skip = False
-
-            sec_low = section.lower()
-
-            if not skip and ocontains: skip = not any([c in sec_low for c in ocontains])
-            if not skip and acontains: skip = not all([c in sec_low for c in acontains])
-            if not skip and ncontains: skip = any([c in sec_low for c in ncontains])
-            if not skip and otags: skip = not any([tdb.tags.contains_tag(sec_low, t) for t in otags])
-            if not skip and atags: skip = not all([tdb.tags.contains_tag(sec_low, t) for t in atags])
-            if not skip and ntags: skip = any([tdb.tags.contains_tag(sec_low, t) for t in ntags])
-            if not skip: filtered.append(last)
+            records.append(last)
 
     for match in re_hex_record.finditer(text):
         nano = int(match.group(1), 16)
         
         if int(nano/1E9) > 1E9:
             nano = int(nano/1E3)
-        delta = 0
-        if last: delta = nano - last["time"]
         current = {
             "date": datetime.fromtimestamp(nano/1E6),
             "time": nano,
-            "delta": delta,
             "text": "",
-            "id": 0,
             "tags": [],
-            "span": match.span(),
-            "pos": match.span()[0]
+            "span": match.span()
         }
         if last and last["time"] > current["time"]: _needs_sort = True
 
@@ -417,40 +394,9 @@ def split_records(text: str, options=None):
     current = {"span": [len(text)]}
     append_record()
 
-    id_offset = -1
-    end_date = None
-    if span:
-        # for record in records:
-        def post_filter(record):
-            nonlocal span
-            nonlocal id_offset
-            nonlocal id
-            nonlocal end_date
-            if all(map(lambda x: isinstance(x, int), span)):
-                return id+span[0] < record["id"] <= id+span[0]+span[1]
-
-            elif isinstance(span[1], int):
-                # tested all the r[1] >= 0 above the given date.
-                if span[1] >= 0: return True
-                # TODO: fix this logic, 1d,-1 is valid and this doesn't get the right record
-                elif span[1] < 0 and record["date"] <= span[0]:
-                    if id_offset == -1: id_offset = record["id"]
-                    return abs(record["id"]-id_offset) < abs(span[1])
-
-            elif isinstance(span[0], int):
-                if span[0] < 0 and (id+span[0]) < record["id"]:
-                    if not end_date:
-                        if isinstance(span[1], datetime): end_date = span[1]
-                        else: end_date = record["date"] + span[1]
-
-                    return record["date"] <= end_date
-                
-            else: return True
-        
-        filtered = filter(post_filter, filtered)
-    if _needs_sort: filtered = sorted(filtered, key=lambda x: x["time"])
-    filtered = [Record(**r) for r in filtered]
-    return filtered
+    if _needs_sort: records = sorted(records, key=lambda x: x["time"])
+    records = [Record(**r) for r in records]
+    return records
 
 
 def find_similar(text):
