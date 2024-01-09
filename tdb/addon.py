@@ -72,7 +72,7 @@ def export_cmd(text, args):
             #     need a way to dedupe tag commands in some cases.
             records = [r for r in tdb.records.split_records(text) if path in r.text]
             for r in records: r.text = "\n".join([l for l in r.text.splitlines() if not l.startswith("@tdb")])
-            tdb.html.print_html(reversed([r.asdict() for r in records]), file)
+            tdb.html.print_html(reversed([r for r in records]), file)
         elif path.endswith(".json"):
             records = [r for r in tdb.records.split_records(text) if path in r.text]
             for r in records: r.text = "\n".join([l for l in r.text.splitlines() if not l.startswith("@tdb")])

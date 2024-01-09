@@ -79,19 +79,19 @@ class TdbServer(SimpleHTTPRequestHandler):
             if "/tdb/html.js" == self.path:
                 headers["Content-Type"] = "text/javascript"
                 self.path = os.path.abspath(os.path.dirname(__file__)+"/html.js")
-                out = open(self.path).read()
+                out = open(self.path, encoding="utf-8").read()
             elif "/tdb/mermaid.min.js" == self.path:
                 headers["Content-Type"] = "text/javascript"
                 self.path = tdb.html._mermaid_js_file
-                out = open(self.path).read()
+                out = open(self.path, encoding="utf-8").read()
             elif "/tdb/mermaid.css" == self.path:
                 headers["Content-Type"] = "text/css"
                 self.path = tdb.html._mermaid_css_file
-                out = open(self.path).read()
+                out = open(self.path, encoding="utf-8").read()
             elif "/tdb/style.css" == self.path:
                 headers["Content-Type"] = "text/css"
                 self.path = tdb.html._css_file
-                out = open(self.path).read()
+                out = open(self.path, encoding="utf-8").read()
             elif "/index.html" == self.path:
                 headers["Content-Type"] = "text/html"
                 out = tdb.html.build_html([], True)
