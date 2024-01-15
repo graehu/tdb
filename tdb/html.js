@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
 								child.appendChild(remove);
 							}
 						}
-						if (mermaid) { mermaid.run(); }
+						if (typeof variable !== 'undefined') { mermaid.run(); }
 						window.scrollTo({ top: before_scroll });
 					}
 				});

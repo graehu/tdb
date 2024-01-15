@@ -110,6 +110,7 @@ class TdbServer(SimpleHTTPRequestHandler):
         code = 200
         headers = {}
         headers["Content-Type"] = "text/json"
+        headers["Content-Length"] = 0
         try:
             db_lock.acquire()
             data_string = self.rfile.read(int(self.headers['Content-Length']))
@@ -144,11 +145,13 @@ class TdbServer(SimpleHTTPRequestHandler):
                         response["ok"] = True
 
             else: code = 404
+            payload = bytes(json.dumps(response)+"\r\n", "utf-8")
+            headers["Content-Length"] = len(payload)
+            self.send_response(code)
             for k, v in headers.items():
                 self.send_header(k, v)
-            self.send_response(code)
             self.end_headers()
-            self.wfile.write(bytes(json.dumps(response)+"\r\n", "utf-8"))
+            self.wfile.write(payload)
 
         finally:
             db_lock.release()
