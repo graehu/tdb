@@ -23,8 +23,9 @@ class TdbServer(SimpleHTTPRequestHandler):
     whitelist = []
 
     def do_GET(self):
-        query_list = None
-
+        query_list = []
+        allowedit = self.client_address[0] == "127.0.0.1"
+        
         # split the query out if need be
         if "?" in self.path:
             self.path, query_list = self.path.split("?")
@@ -33,8 +34,8 @@ class TdbServer(SimpleHTTPRequestHandler):
             else:
                 query_list = [query_list]
         
-        # put the queries into a dict        
-        if query_list and self.path.startswith("/api/"):
+        # put the queries into a dict
+        if self.path.startswith("/api/"):
             queries = {}
             for q in query_list:
                 k, v = q.split("=", 1)
@@ -55,9 +56,12 @@ class TdbServer(SimpleHTTPRequestHandler):
                 response["ok"] = True
                 response["records"] = tdb.records.stringify_db_records(options)
             elif "/api/get.tags" == self.path:
-                print("getting tags")
+                print("getting tags - not implemented")
                 response["ok"] = True
                 response["tags"] = "not implemented"
+            elif "/api/get.allowedit" == self.path:
+                response["ok"] = True
+                response["allowedit"] = allowedit
             else:
                 self.send_response(404)
                 for k, v in headers.items():
@@ -107,6 +111,7 @@ class TdbServer(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         response = {"ok": False}
+        allowedit = self.client_address[0] == "127.0.0.1"
         code = 200
         headers = {}
         headers["Content-Type"] = "text/json"
@@ -116,12 +121,12 @@ class TdbServer(SimpleHTTPRequestHandler):
             data_string = self.rfile.read(int(self.headers['Content-Length']))
             parsed = data_string.decode("utf-8")
             parsed = json.loads(parsed)
-            if "/api/add.record" == self.path:
+            if "/api/add.record" == self.path and allowedit:
                 if "text" in parsed:
                     tdb.records.add_record(parsed["text"])
                     response["ok"] = True
            
-            elif "/api/edit.record" == self.path:
+            elif "/api/edit.record" == self.path and allowedit:
                 if "text" in parsed and "date" in parsed:
                     options = tdb.cli.parse_options("web")
                     options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]
@@ -134,7 +139,7 @@ class TdbServer(SimpleHTTPRequestHandler):
                         tdb.db.serialise()
                         response["ok"] = True
 
-            elif "/api/remove.record" == self.path:
+            elif "/api/remove.record" == self.path and allowedit:
                 if "date" in parsed:
                     options = tdb.cli.parse_options("web")
                     options["dates"] = tdb.cli.parse_options("web "+parsed["date"])["dates"]

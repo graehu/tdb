@@ -21,6 +21,13 @@ function httpPost(theUrl, data, callback) {
 	xmlHttp.send(data);
 };
 
+var allowedit = false;
+httpGet(window.origin + "/api/get.allowedit", function(response)
+{
+	response = JSON.parse(response);
+	if (response["ok"]) { allowedit = response["allowedit"]; }
+});
+
 document.addEventListener("DOMContentLoaded", function () {
 	const input = document.querySelector("input");
 	if (input)
@@ -47,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
 						container.innerHTML = response["records"];
 						for(var i = 0; i < container.children.length; i++)
 						{
-							if (container.children[i].className == "entry")
+							if (container.children[i].className == "entry" && allowedit)
 							{
 								var child = container.children[i];
 								var edit = document.createElement("button");
