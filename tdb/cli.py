@@ -75,8 +75,8 @@ def print_options():
     print("-@{tag}: ".ljust(16)+"This tag must not be included. i.e. -@notes @school, records for school, no notes.")
     print("{text}: ".ljust(16)+"This text is optional.")
     print("+{text}: ".ljust(16)+"This text must be included.")
-    print("-{text}: ".ljust(16)+"This text must not be included")
-    print("\nNote, text must be quoted if there are spaces.")
+    print("-{text}: ".ljust(16)+"This text must not be included.")
+    print("\nNote, for options text must be quoted if there are spaces.")
 
 
 def parse_options(override = ""):
