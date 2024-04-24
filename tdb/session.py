@@ -11,10 +11,13 @@ import sys
 
 _last_text = ""
 _start_text = ""
+_start_time = None
 
 def start(name, content="", ext=".txt", update_cb=None):
     global _last_text
     global _start_text
+    global _start_time
+    _start_time = time.time_ns()
     _start_text = content
     name += "-"
     temp_file = tempfile.NamedTemporaryFile(mode="w+", prefix=name, suffix=ext, delete=False)
@@ -48,7 +51,7 @@ def start(name, content="", ext=".txt", update_cb=None):
  
 def signal_term_handler(signal, frame):
     if _last_text != _start_text:
-        tdb.records.add_record(_last_text)
+        tdb.records.add_record(_last_text, _start_time)
     sys.exit(1)
  
 signal.signal(signal.SIGTERM, signal_term_handler)

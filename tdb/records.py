@@ -81,9 +81,9 @@ def make_record(date, text):
     return f"[tdb:{date}] {text}"
 
 
-def add_record(text):
+def add_record(text, start_time = None):
     dt = tdb.db.get_mtime()
-    ns = time.time_ns()
+    ns = start_time if start_time else time.time_ns()
     # convert to microseconds for datetime compliance
     ns = int(ns/1E3)
 

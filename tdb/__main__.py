@@ -81,7 +81,7 @@ def main():
         if not text:
             text = tdb.session.start("tdb_add", ext=edit_ext)
         if text:
-            tdb.records.add_record(text)
+            tdb.records.add_record(text, tdb.session._start_time)
         else:
             print("No text provided. Record not added.")
             sys.exit(1)
@@ -167,7 +167,7 @@ def main():
             if content == text:
                 print("no changes made")
                 return
-            if text and tdb.records.add_record(text):
+            if text and tdb.records.add_record(text, tdb.session._start_time):
                 print("Record added successfully!")
             else:
                 print("No text provided. Record not added.")
