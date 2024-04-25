@@ -155,10 +155,10 @@ def get_safe_filename():
 
 
 def run(text):
-    print("running "+text)
+    print("running: "+text)
     subprocess.run(text, shell=True)
 
 
 def popen(text):
-    print("running "+text)
+    print("running: "+text)
     return subprocess.Popen(text, shell=True)

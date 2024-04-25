@@ -1,13 +1,14 @@
+import sys
 import os
-import platform
 import time
+import signal
+import platform
 import tempfile
+from datetime import datetime
 import tdb.cli
 import tdb.tags
 import tdb.config
 import tdb.records
-import signal
-import sys
 
 _last_text = ""
 _start_text = ""
@@ -21,6 +22,7 @@ def start(name, content="", ext=".txt", update_cb=None):
     _start_text = content
     name += "-"
     temp_file = tempfile.NamedTemporaryFile(mode="w+", prefix=name, suffix=ext, delete=False)
+    print(f"session: {temp_file.name} {datetime.fromtimestamp(int(_start_time/1E9))}")
     temp_file.write(content)
     temp_file.close()
     proc = tdb.cli.popen(f"{tdb.config.get('editor')} {temp_file.name}")
