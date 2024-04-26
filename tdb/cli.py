@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 import sys
-import subprocess
+import curses
 import shlex
 import platform
+import subprocess
 
 
 class ANSICodes:
@@ -162,3 +163,39 @@ def run(text):
 def popen(text):
     print("running: "+text)
     return subprocess.Popen(text, shell=True)
+
+
+__curses_lines = []
+def __curses_cli(stdscr):
+    global __curses_lines
+    key = 0
+    page_y = 0
+    stdscr.clear()
+    stdscr.refresh()
+
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.curs_set(0)
+
+    while (key != ord('q')):
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+
+        if key == curses.KEY_DOWN: page_y += 1
+        elif key == curses.KEY_UP: page_y -= 1
+
+        page_y = max(0, page_y)
+        page_y = min(len(__curses_lines)-height, page_y)
+
+        display = __curses_lines[page_y:]
+        for num, line in enumerate(display):
+            if num >= height-1: break
+            stdscr.addstr(num, 0, line[0:width], curses.color_pair(1))
+        stdscr.refresh()
+        key = stdscr.getch()
+
+
+def as_less(lines):
+    global __curses_lines
+    __curses_lines = lines
+    curses.wrapper(__curses_cli)

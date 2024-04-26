@@ -52,7 +52,7 @@ def import_addons(printout=False):
 def main():
     if len(sys.argv) < 2 or "--help" in sys.argv or sys.argv[1] == "help":
         print("# tdb\n\nA text based database with tagging.\n\n```")
-        print("Usage: py -m tdb [add | edit | rm | show | template | open | listen] [text | options]")
+        print("Usage: py -m tdb [add | edit | rm | less | show | template | open | listen] [text | options]")
         print("".ljust(64,"-"))
         print("Commands:")
         print("add:".ljust(16)+"Make a record when text is supplied. Otherwise, open an editor to write one.")
@@ -88,6 +88,10 @@ def main():
 
     elif command == "show":
         tdb.records.print_db_records(options)
+    
+    elif command == "less":
+        out = tdb.records.stringify_db_records(options)
+        tdb.cli.as_less(out.splitlines())
 
     elif command == "open":
         if "config" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
