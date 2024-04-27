@@ -23,7 +23,7 @@ ANSICodes = {
     "light_blue" : ["\033[1;34m", None],
     "light_purple" : ["\033[1;35m", None],
     "light_cyan" : ["\033[1;36m", None],
-    "light_white" : ["\033[1;37m", None],
+    "light_white" : ["\033[1;37m", (6, curses.COLOR_BLUE, curses.COLOR_BLACK)],
     "bold" : ["\033[1m", None], #(7, curses.A_BOLD, curses.COLOR_BLACK)],
     "faint" : ["\033[2m", None], # (8, curses.A_DIM, curses.COLOR_BLACK)], # todo: test this actually works?
     "italic" : ["\033[3m", None], # (9, curses.A_ITALIC, curses.COLOR_BLACK)],
@@ -176,20 +176,24 @@ def __curses_cli(stdscr):
     stdscr.refresh()
 
     curses.start_color()
-    re_ansicodes = []
-    for val in ANSICodes.values():
-        re_ansicodes += [re.compile(f"({re.escape(val[0])})(.*?)({re.escape(ANSICodes['end'][0])})")]
-        if val[1]: curses.init_pair(*val[1])
+    for k, v in ANSICodes.items():
+        if k != "end": 
+            ANSICodes[k] += [re.compile(f"({re.escape(v[0])})(.*?)({re.escape(ANSICodes['end'][0])})", re.MULTILINE)]
+            if v[1]: curses.init_pair(*v[1])
+        else: ANSICodes[k] += [None]
     
-    col_default = len(re_ansicodes)
-    col_status = len(re_ansicodes)+1
+    col_default = len(ANSICodes)
+    col_status = len(ANSICodes)+1
     
-    curses.init_pair(*(col_default, curses.COLOR_WHITE, curses.COLOR_BLACK))
+    curses.init_pair(col_default, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(col_status, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
-    for re_pat in re_ansicodes:
-        curses.init_pair
-        __curses_text = re_pat.sub(r"\2", __curses_text)
+    # for re_pat in [v[-1] for v in ANSICodes.values()]:
+    #     if re_pat:
+    #         for match in re_pat.finditer(__curses_text):
+    #             __curses_text = __curses_text.replace(match.group(0), match.group(2), 1)
+            # __curses_text = __curses_text[0:span[0]]+match.groups()[0]+__curses_text[span[1]:]
+        # __curses_text = re_pat.sub(r"\2", __curses_text, 100)
 
     lines = __curses_text.splitlines()
     curses.curs_set(0)
@@ -202,13 +206,26 @@ def __curses_cli(stdscr):
         elif key == curses.KEY_UP: page_y -= 1
 
         page_y = max(0, page_y)
-        page_y = min(len(lines)-height, page_y)
+        page_y = min(len(lines)-(height-1), page_y)
 
         display = lines[page_y:]
         for num, line in enumerate(display):
             if num >= height-1: break
-            stdscr.addstr(num, 0, line[0:width], curses.color_pair(col_default))
-
+            stripped = line
+            for v in [v[-1] for v in ANSICodes.values() if v[-1]]:
+                stripped = v.sub(r"\2", stripped)
+            
+            stripped = stripped[0:width]
+            stdscr.addstr(num, 0, stripped, curses.color_pair(col_default))
+            
+            delta = 0
+            for k,v in ANSICodes.items():
+                if not v[-1]: continue
+                for match in v[-1].finditer(line):
+                    stdscr.addstr(num, match.span()[0]-delta, str(match.group(2)), curses.color_pair(v[1][0] if v[1] else col_default))
+                    delta += len(match.group(0))-len(match.group(2))
+                    line = v[-1].sub(r"\2", line)
+                    
 
         statusbarstr = "Press 'q' to exit | Pos: {}".format(page_y)
         stdscr.attron(curses.color_pair(col_status))
