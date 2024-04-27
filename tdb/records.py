@@ -215,12 +215,12 @@ def merge_records(text_head, text_a, text_b):
 tdb.db._db_merge_func = merge_records
 
 
-def stringify_db_records(options:dict=None):
+def stringify_db_records(options:dict=None, ansi_colours=False):
     records = split_db_records(options)
-    return stringify_records(records, options)
+    return stringify_records(records, options, ansi_colours)
 
 
-def stringify_records(records:list, options:dict=None):
+def stringify_records(records:list, options:dict=None, ansi_colours=False):
     out = ""
     if options and options["as"] == "json":
         res = [r.asdict() for r in records]
@@ -247,19 +247,19 @@ def stringify_records(records:list, options:dict=None):
     else:
         out = "".join([str(r) for r in records])
         out = out.strip()
+
+    if ansi_colours:
+        for tag in tdb.tags.find_tags(out):
+            col = getattr(tdb.cli.ANSICodes, tdb.tags.get_colour(tag[0]))[0]
+            out = out.replace("@"+tag[0], col+"@"+tag[0]+tdb.cli.ANSICodes.end[0])
+        # TODO: the [tdb:\1] here feels like it could be done better. Also, config colour for tdb header?
+        out = re_iso_record.sub(tdb.cli.ANSICodes.light_white[0]+r"[tdb:\1] "+tdb.cli.ANSICodes.end[0], out)
+    
     return out
 
 
 def print_records(records, options=None):
-    if out := stringify_records(records, options):
-        if tdb.cli.isatty():
-            for tag in tdb.tags.find_tags(out):
-                col = getattr(tdb.cli.ANSICodes, tdb.tags.get_colour(tag[0]))[0]
-                out = out.replace("@"+tag[0], col+"@"+tag[0]+tdb.cli.ANSICodes.end[0])
-            # TODO: the [tdb:\1] here feels like it could be done better. Also, config colour for tdb header?
-            out = re_iso_record.sub(tdb.cli.ANSICodes.light_white[0]+r"[tdb:\1] "+tdb.cli.ANSICodes.end[0], out)
-        print(out)
-
+    print(stringify_records(records, options, tdb.cli.isatty()))
 
 def print_db_records(options=None):
     if records := split_db_records(options):

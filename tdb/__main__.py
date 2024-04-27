@@ -90,8 +90,7 @@ def main():
         tdb.records.print_db_records(options)
     
     elif command == "less":
-        out = tdb.records.stringify_db_records(options)
-        tdb.cli.as_less(out.splitlines())
+        tdb.cli.as_less(tdb.records.stringify_db_records(options, True))
 
     elif command == "open":
         if "config" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")

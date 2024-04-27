@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import re
 import sys
 import curses
 import shlex
@@ -31,6 +32,13 @@ class ANSICodes:
     negative = ["\033[7m", curses.A_REVERSE] # todo: test this actually works?
     crossed = ["\033[9m", curses.A_PROTECT] # todo: test this actually works?
     end = ["\033[0m", None]
+
+
+re_ansicodes = []
+for attr in dir(ANSICodes):
+    if attr.startswith("__") or attr == "end": continue
+    escape = lambda x: re.escape(getattr(ANSICodes, x)[0])
+    re_ansicodes += [re.compile(f"({escape(attr)})(.*?)({escape('end')})")]
 
 
 def enable_ansi():
@@ -165,9 +173,9 @@ def popen(text):
     return subprocess.Popen(text, shell=True)
 
 
-__curses_lines = []
+__curses_text = ""
 def __curses_cli(stdscr):
-    global __curses_lines
+    global __curses_text
     key = 0
     page_y = 0
     stdscr.clear()
@@ -175,7 +183,13 @@ def __curses_cli(stdscr):
 
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.curs_set(0)
+
+    for re_pat in re_ansicodes:
+        __curses_text = re_pat.sub(r"\2", __curses_text)
+
+    lines = __curses_text.splitlines()
 
     while (key != ord('q')):
         stdscr.clear()
@@ -185,17 +199,25 @@ def __curses_cli(stdscr):
         elif key == curses.KEY_UP: page_y -= 1
 
         page_y = max(0, page_y)
-        page_y = min(len(__curses_lines)-height, page_y)
+        page_y = min(len(lines)-height, page_y)
 
-        display = __curses_lines[page_y:]
+        display = lines[page_y:]
         for num, line in enumerate(display):
             if num >= height-1: break
             stdscr.addstr(num, 0, line[0:width], curses.color_pair(1))
+
+
+        statusbarstr = "Press 'q' to exit | Pos: {}".format(page_y)
+        stdscr.attron(curses.color_pair(2))
+        stdscr.addstr(height-1, 0, statusbarstr)
+        stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
+        stdscr.attroff(curses.color_pair(2))
+
         stdscr.refresh()
         key = stdscr.getch()
 
 
-def as_less(lines):
-    global __curses_lines
-    __curses_lines = lines
+def as_less(text):
+    global __curses_text
+    __curses_text = text
     curses.wrapper(__curses_cli)
