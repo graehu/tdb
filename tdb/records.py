@@ -254,10 +254,10 @@ def print_records(records, options=None):
     if out := stringify_records(records, options):
         if tdb.cli.isatty():
             for tag in tdb.tags.find_tags(out):
-                col = getattr(tdb.cli.ANSICodes, tdb.tags.get_colour(tag[0]))
-                out = out.replace("@"+tag[0], col+"@"+tag[0]+tdb.cli.ANSICodes.end)
+                col = getattr(tdb.cli.ANSICodes, tdb.tags.get_colour(tag[0]))[0]
+                out = out.replace("@"+tag[0], col+"@"+tag[0]+tdb.cli.ANSICodes.end[0])
             # TODO: the [tdb:\1] here feels like it could be done better. Also, config colour for tdb header?
-            out = re_iso_record.sub(tdb.cli.ANSICodes.light_white+r"[tdb:\1] "+tdb.cli.ANSICodes.end, out)
+            out = re_iso_record.sub(tdb.cli.ANSICodes.light_white[0]+r"[tdb:\1] "+tdb.cli.ANSICodes.end[0], out)
         print(out)
 
 

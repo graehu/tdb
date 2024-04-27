@@ -5,32 +5,32 @@ import shlex
 import platform
 import subprocess
 
-
+# todo: do something about the missing colours for curses
 class ANSICodes:
-    black = "\033[0;30m"
-    red = "\033[0;31m"
-    green = "\033[0;32m"
-    brown = "\033[0;33m"
-    blue = "\033[0;34m"
-    purple = "\033[0;35m"
-    cyan = "\033[0;36m"
-    light_gray = "\033[0;37m"
-    dark_gray = "\033[1;30m"
-    light_red = "\033[1;31m"
-    light_green = "\033[1;32m"
-    yellow = "\033[1;33m"
-    light_blue = "\033[1;34m"
-    light_purple = "\033[1;35m"
-    light_cyan = "\033[1;36m"
-    light_white = "\033[1;37m"
-    bold = "\033[1m"
-    faint = "\033[2m"
-    italic = "\033[3m"
-    underline = "\033[4m"
-    blink = "\033[5m"
-    negative = "\033[7m"
-    crossed = "\033[9m"
-    end = "\033[0m"
+    black = ["\033[0;30m", curses.COLOR_BLACK]
+    red = ["\033[0;31m", curses.COLOR_RED]
+    green = ["\033[0;32m", curses.COLOR_GREEN]
+    brown = ["\033[0;33m", None]
+    blue = ["\033[0;34m", curses.COLOR_BLUE]
+    purple = ["\033[0;35m", None]
+    cyan = ["\033[0;36m", curses.COLOR_CYAN]
+    light_gray = ["\033[0;37m", None]
+    dark_gray = ["\033[1;30m", None]
+    light_red = ["\033[1;31m", None]
+    light_green = ["\033[1;32m", None]
+    yellow = ["\033[1;33m", curses.COLOR_YELLOW]
+    light_blue = ["\033[1;34m", None]
+    light_purple = ["\033[1;35m", None]
+    light_cyan = ["\033[1;36m", None]
+    light_white = ["\033[1;37m", None]
+    bold = ["\033[1m", curses.A_BOLD]
+    faint = ["\033[2m", curses.A_DIM] # todo: test this actually works?
+    italic = ["\033[3m", curses.A_ITALIC]
+    underline = ["\033[4m", curses.A_UNDERLINE]
+    blink = ["\033[5m", curses.A_BLINK]
+    negative = ["\033[7m", curses.A_REVERSE] # todo: test this actually works?
+    crossed = ["\033[9m", curses.A_PROTECT] # todo: test this actually works?
+    end = ["\033[0m", None]
 
 
 def enable_ansi():
