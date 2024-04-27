@@ -7,38 +7,32 @@ import platform
 import subprocess
 
 # todo: do something about the missing colours for curses
-class ANSICodes:
-    black = ["\033[0;30m", curses.COLOR_BLACK]
-    red = ["\033[0;31m", curses.COLOR_RED]
-    green = ["\033[0;32m", curses.COLOR_GREEN]
-    brown = ["\033[0;33m", None]
-    blue = ["\033[0;34m", curses.COLOR_BLUE]
-    purple = ["\033[0;35m", None]
-    cyan = ["\033[0;36m", curses.COLOR_CYAN]
-    light_gray = ["\033[0;37m", None]
-    dark_gray = ["\033[1;30m", None]
-    light_red = ["\033[1;31m", None]
-    light_green = ["\033[1;32m", None]
-    yellow = ["\033[1;33m", curses.COLOR_YELLOW]
-    light_blue = ["\033[1;34m", None]
-    light_purple = ["\033[1;35m", None]
-    light_cyan = ["\033[1;36m", None]
-    light_white = ["\033[1;37m", None]
-    bold = ["\033[1m", curses.A_BOLD]
-    faint = ["\033[2m", curses.A_DIM] # todo: test this actually works?
-    italic = ["\033[3m", curses.A_ITALIC]
-    underline = ["\033[4m", curses.A_UNDERLINE]
-    blink = ["\033[5m", curses.A_BLINK]
-    negative = ["\033[7m", curses.A_REVERSE] # todo: test this actually works?
-    crossed = ["\033[9m", curses.A_PROTECT] # todo: test this actually works?
-    end = ["\033[0m", None]
-
-
-re_ansicodes = []
-for attr in dir(ANSICodes):
-    if attr.startswith("__") or attr == "end": continue
-    escape = lambda x: re.escape(getattr(ANSICodes, x)[0])
-    re_ansicodes += [re.compile(f"({escape(attr)})(.*?)({escape('end')})")]
+ANSICodes = {
+    "black" : ["\033[0;30m", (1, curses.COLOR_BLACK, curses.COLOR_BLACK)],
+    "red" : ["\033[0;31m", (2, curses.COLOR_RED, curses.COLOR_BLACK)],
+    "green" : ["\033[0;32m", (3, curses.COLOR_GREEN, curses.COLOR_BLACK)],
+    "brown" : ["\033[0;33m", None],
+    "blue" : ["\033[0;34m", (4, curses.COLOR_BLUE, curses.COLOR_BLACK)],
+    "purple" : ["\033[0;35m", None],
+    "cyan" : ["\033[0;36m", (5, curses.COLOR_CYAN, curses.COLOR_BLACK)],
+    "light_gray" : ["\033[0;37m", None],
+    "dark_gray" : ["\033[1;30m", None],
+    "light_red" : ["\033[1;31m", None],
+    "light_green" : ["\033[1;32m", None],
+    "yellow" : ["\033[1;33m", (6, curses.COLOR_YELLOW, curses.COLOR_BLACK)],
+    "light_blue" : ["\033[1;34m", None],
+    "light_purple" : ["\033[1;35m", None],
+    "light_cyan" : ["\033[1;36m", None],
+    "light_white" : ["\033[1;37m", None],
+    "bold" : ["\033[1m", None], #(7, curses.A_BOLD, curses.COLOR_BLACK)],
+    "faint" : ["\033[2m", None], # (8, curses.A_DIM, curses.COLOR_BLACK)], # todo: test this actually works?
+    "italic" : ["\033[3m", None], # (9, curses.A_ITALIC, curses.COLOR_BLACK)],
+    "underline" : ["\033[4m", None],# (10, curses.A_UNDERLINE, curses.COLOR_BLACK)],
+    "blink" : ["\033[5m", None], # (11, curses.A_BLINK, curses.COLOR_BLACK)],
+    "negative" : ["\033[7m", None],# (12, curses.A_REVERSE, curses.COLOR_BLACK)], # todo: test this actually works?
+    "crossed" : ["\033[9m", None], # (13, curses.A_PROTECT, curses.COLOR_BLACK)], # todo: test this actually works?
+    "end" : ["\033[0m", None],
+}
 
 
 def enable_ansi():
@@ -182,14 +176,23 @@ def __curses_cli(stdscr):
     stdscr.refresh()
 
     curses.start_color()
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.curs_set(0)
+    re_ansicodes = []
+    for val in ANSICodes.values():
+        re_ansicodes += [re.compile(f"({re.escape(val[0])})(.*?)({re.escape(ANSICodes['end'][0])})")]
+        if val[1]: curses.init_pair(*val[1])
+    
+    col_default = len(re_ansicodes)
+    col_status = len(re_ansicodes)+1
+    
+    curses.init_pair(*(col_default, curses.COLOR_WHITE, curses.COLOR_BLACK))
+    curses.init_pair(col_status, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
     for re_pat in re_ansicodes:
+        curses.init_pair
         __curses_text = re_pat.sub(r"\2", __curses_text)
 
     lines = __curses_text.splitlines()
+    curses.curs_set(0)
 
     while (key != ord('q')):
         stdscr.clear()
@@ -204,14 +207,14 @@ def __curses_cli(stdscr):
         display = lines[page_y:]
         for num, line in enumerate(display):
             if num >= height-1: break
-            stdscr.addstr(num, 0, line[0:width], curses.color_pair(1))
+            stdscr.addstr(num, 0, line[0:width], curses.color_pair(col_default))
 
 
         statusbarstr = "Press 'q' to exit | Pos: {}".format(page_y)
-        stdscr.attron(curses.color_pair(2))
+        stdscr.attron(curses.color_pair(col_status))
         stdscr.addstr(height-1, 0, statusbarstr)
         stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
-        stdscr.attroff(curses.color_pair(2))
+        stdscr.attroff(curses.color_pair(col_status))
 
         stdscr.refresh()
         key = stdscr.getch()
