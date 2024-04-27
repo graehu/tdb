@@ -222,7 +222,8 @@ def __curses_cli(stdscr):
             for k,v in ANSICodes.items():
                 if not v[-1]: continue
                 for match in v[-1].finditer(line):
-                    stdscr.addstr(num, match.span()[0]-delta, str(match.group(2)), curses.color_pair(v[1][0] if v[1] else col_default))
+                    try: stdscr.addstr(num, match.span()[0]-delta, match.group(2), curses.color_pair(v[1][0] if v[1] else col_default))
+                    except: pass
                     delta += len(match.group(0))-len(match.group(2))
                     line = v[-1].sub(r"\2", line)
                     
