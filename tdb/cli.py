@@ -218,14 +218,19 @@ def __curses_cli(stdscr):
             stripped = stripped[0:width]
             stdscr.addstr(num, 0, stripped, curses.color_pair(col_default))
             
-            delta = 0
+            matches = []
             for k,v in ANSICodes.items():
                 if not v[-1]: continue
                 for match in v[-1].finditer(line):
-                    try: stdscr.addstr(num, match.span()[0]-delta, match.group(2), curses.color_pair(v[1][0] if v[1] else col_default))
-                    except: pass
-                    delta += len(match.group(0))-len(match.group(2))
-                    line = v[-1].sub(r"\2", line)
+                    matches.append([match, v])
+            
+            delta = 0
+            matches = sorted(matches, key=lambda x: x[0].span()[0])
+            for match, v in matches:
+                try: stdscr.addstr(num, match.span()[0]-delta, match.group(2), curses.color_pair(v[1][0] if v[1] else col_default))
+                except: pass
+                delta += len(match.group(0))-len(match.group(2))
+                line = v[-1].sub(r"\2", line)
                     
 
         statusbarstr = "Press 'q' to exit | Pos: {}".format(page_y)
