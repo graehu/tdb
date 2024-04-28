@@ -252,7 +252,7 @@ def __curses_cli(stdscr):
         key = stdscr.getch()
 
 
-def as_less(text):
+def open_tui(text):
     global __curses_text
     __curses_text = text
     curses.wrapper(__curses_cli)
