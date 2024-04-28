@@ -14,6 +14,7 @@ def register(tags):
 
 
 def get_colour(tag) -> str:
+    if not tag in _config: return "light_white"
     col = _config[tag]["colour"]
     if not col in _colours:
         print(f"warning: '{tag}' has invalid colour '{col}'")

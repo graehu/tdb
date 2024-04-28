@@ -6,24 +6,33 @@ import shlex
 import platform
 import subprocess
 
+
+def _init_colour(r,g,b) -> int:
+    _init_colour.id += 1
+    _init_colour.cols += [(_init_colour.id, r, g, b)]
+    return _init_colour.id
+
+_init_colour.cols = []
+_init_colour.id = 16 # index past initial 16 cols.
+
 # todo: do something about the missing colours for curses
 ANSICodes = {
-    "black" : ["\033[0;30m", (1, curses.COLOR_BLACK, curses.COLOR_BLACK)],
-    "red" : ["\033[0;31m", (2, curses.COLOR_RED, curses.COLOR_BLACK)],
-    "green" : ["\033[0;32m", (3, curses.COLOR_GREEN, curses.COLOR_BLACK)],
-    "brown" : ["\033[0;33m", None],
-    "blue" : ["\033[0;34m", (4, curses.COLOR_BLUE, curses.COLOR_BLACK)],
-    "purple" : ["\033[0;35m", None],
-    "cyan" : ["\033[0;36m", (5, curses.COLOR_CYAN, curses.COLOR_BLACK)],
-    "light_gray" : ["\033[0;37m", None],
-    "dark_gray" : ["\033[1;30m", None],
-    "light_red" : ["\033[1;31m", None],
-    "light_green" : ["\033[1;32m", None],
-    "yellow" : ["\033[1;33m", (6, curses.COLOR_YELLOW, curses.COLOR_BLACK)],
-    "light_blue" : ["\033[1;34m", None],
-    "light_purple" : ["\033[1;35m", None],
-    "light_cyan" : ["\033[1;36m", None],
-    "light_white" : ["\033[1;37m", (6, curses.COLOR_BLUE, curses.COLOR_BLACK)],
+    "black" : ["\033[0;30m", (1, _init_colour(0, 0, 0), curses.COLOR_BLACK)],
+    "red" : ["\033[0;31m", (2, _init_colour(1000, 300, 300), curses.COLOR_BLACK)],
+    "green" : ["\033[0;32m", (3, _init_colour(300, 1000, 300), curses.COLOR_BLACK)],
+    "brown" : ["\033[0;33m", (4, _init_colour(588, 295, 300), curses.COLOR_BLACK)],
+    "blue" : ["\033[0;34m", (5, _init_colour(300, 300, 1000), curses.COLOR_BLACK)],
+    "purple" : ["\033[0;35m", (6, _init_colour(1000, 300,1000), curses.COLOR_BLACK)],
+    "cyan" : ["\033[0;36m", (7, _init_colour(300, 1000, 1000), curses.COLOR_BLACK)],
+    "light_gray" : ["\033[0;37m", (8, _init_colour(800, 800, 800), curses.COLOR_BLACK)],
+    "dark_gray" : ["\033[1;30m", (9, _init_colour(600, 600, 600), curses.COLOR_BLACK)],
+    "light_red" : ["\033[1;31m", (10, _init_colour(1000, 400, 400), curses.COLOR_BLACK)],
+    "light_green" : ["\033[1;32m", (11, _init_colour(400,400, 1000), curses.COLOR_BLACK)],
+    "yellow" : ["\033[1;33m", (12, _init_colour(1000, 1000, 300), curses.COLOR_BLACK)],
+    "light_blue" : ["\033[1;34m", (13, _init_colour(400, 400, 1000), curses.COLOR_BLACK)],
+    "light_purple" : ["\033[1;35m", (14, _init_colour(1000, 400, 1000), curses.COLOR_BLACK)],
+    "light_cyan" : ["\033[1;36m", (15, _init_colour(400, 1000, 1000), curses.COLOR_BLACK)],
+    "light_white" : ["\033[1;37m", (16, _init_colour(1000, 1000, 1000), curses.COLOR_BLACK)],
     "bold" : ["\033[1m", None], #(7, curses.A_BOLD, curses.COLOR_BLACK)],
     "faint" : ["\033[2m", None], # (8, curses.A_DIM, curses.COLOR_BLACK)], # todo: test this actually works?
     "italic" : ["\033[3m", None], # (9, curses.A_ITALIC, curses.COLOR_BLACK)],
@@ -176,6 +185,7 @@ def __curses_cli(stdscr):
     stdscr.refresh()
 
     curses.start_color()
+    for col in _init_colour.cols: curses.init_color(*col)
     for k, v in ANSICodes.items():
         if k != "end": 
             ANSICodes[k] += [re.compile(f"({re.escape(v[0])})(.*?)({re.escape(ANSICodes['end'][0])})", re.MULTILINE)]
@@ -205,8 +215,7 @@ def __curses_cli(stdscr):
         if key == curses.KEY_DOWN: page_y += 1
         elif key == curses.KEY_UP: page_y -= 1
 
-        page_y = max(0, page_y)
-        page_y = min(len(lines)-(height-1), page_y)
+        page_y = min(max(0, len(lines)-(height-1)), max(0, page_y))
 
         display = lines[page_y:]
         for num, line in enumerate(display):
