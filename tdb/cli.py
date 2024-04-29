@@ -212,11 +212,15 @@ def open_tui(curses_text):
         while (key != ord('q')):
             stdscr.clear()
             height, width = stdscr.getmaxyx()
+            max_y = max(0, len(lines)-(height-1))
 
             if key == curses.KEY_DOWN: page_y += 1
             elif key == curses.KEY_UP: page_y -= 1
-
-            page_y = min(max(0, len(lines)-(height-1)), max(0, page_y))
+            elif key == ord(' '):
+                if max_y == page_y: page_y = 0
+                else: page_y += height-1
+            
+            page_y = min(max_y, max(0, page_y))
 
             display = lines[page_y:]
             for num, line in enumerate(display):
@@ -243,7 +247,7 @@ def open_tui(curses_text):
                     line = v[-1].sub(r"\2", line)
                         
 
-            statusbarstr = "Press 'q' to exit | Pos: {}".format(page_y)
+            statusbarstr = f"'q': to exit | 'space': down | pos: {page_y}/{max_y}"
             stdscr.attron(curses.color_pair(col_status))
             stdscr.addstr(height-1, 0, statusbarstr)
             stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
