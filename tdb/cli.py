@@ -15,31 +15,32 @@ def _init_colour(r,g,b) -> int:
 _init_colour.cols = {}
 _init_colour.id = 16 # index past initial 16 cols.
 
-# todo: do something about the missing colours for curses
 ANSICodes = {
-    "black" : ["\033[0;30m", (1, _init_colour(0, 0, 0), _init_colour(0, 0, 0))],
-    "red" : ["\033[0;31m", (2, _init_colour(1000, 300, 300), _init_colour(0, 0, 0))],
-    "green" : ["\033[0;32m", (3, _init_colour(300, 1000, 300), _init_colour(0, 0, 0))],
-    "brown" : ["\033[0;33m", (4, _init_colour(588, 295, 300), _init_colour(0, 0, 0))],
-    "blue" : ["\033[0;34m", (5, _init_colour(300, 300, 1000), _init_colour(0, 0, 0))],
-    "purple" : ["\033[0;35m", (6, _init_colour(1000, 300,1000), _init_colour(0, 0, 0))],
-    "cyan" : ["\033[0;36m", (7, _init_colour(300, 1000, 1000), _init_colour(0, 0, 0))],
-    "light_gray" : ["\033[0;37m", (8, _init_colour(800, 800, 800), _init_colour(0, 0, 0))],
-    "dark_gray" : ["\033[1;30m", (9, _init_colour(600, 600, 600), _init_colour(0, 0, 0))],
-    "light_red" : ["\033[1;31m", (10, _init_colour(1000, 400, 400), _init_colour(0, 0, 0))],
-    "light_green" : ["\033[1;32m", (11, _init_colour(400,400, 1000), _init_colour(0, 0, 0))],
-    "yellow" : ["\033[1;33m", (12, _init_colour(1000, 1000, 300), _init_colour(0, 0, 0))],
-    "light_blue" : ["\033[1;34m", (13, _init_colour(400, 400, 1000), _init_colour(0, 0, 0))],
-    "light_purple" : ["\033[1;35m", (14, _init_colour(1000, 400, 1000), _init_colour(0, 0, 0))],
-    "light_cyan" : ["\033[1;36m", (15, _init_colour(400, 1000, 1000), _init_colour(0, 0, 0))],
-    "light_white" : ["\033[1;37m", (16, _init_colour(1000, 1000, 1000), _init_colour(0, 0, 0))],
+    "black" : ["\033[0;30m", (1, _init_colour(0, 0, 0), -1)],
+    "red" : ["\033[0;31m", (2, _init_colour(1000, 100, 50), -1)],
+    "green" : ["\033[0;32m", (3, _init_colour(300, 1000, 300), -1)],
+    "brown" : ["\033[0;33m", (4, _init_colour(688, 395, 500), -1)],
+    "blue" : ["\033[0;34m", (5, _init_colour(300, 300, 1000), -1)],
+    "purple" : ["\033[0;35m", (6, _init_colour(1000, 300,1000), -1)],
+    "cyan" : ["\033[0;36m", (7, _init_colour(300, 1000, 1000), -1)],
+    "light_gray" : ["\033[0;37m", (8, _init_colour(800, 800, 800), -1)],
+    "dark_gray" : ["\033[1;30m", (9, _init_colour(600, 600, 600), -1)],
+    "light_red" : ["\033[1;31m", (10, _init_colour(1000, 400, 400), -1)],
+    "light_green" : ["\033[1;32m", (11, _init_colour(400,1000, 400), -1)],
+    "yellow" : ["\033[1;33m", (12, _init_colour(1000, 1000, 300), -1)],
+    "light_blue" : ["\033[1;34m", (13, _init_colour(400, 600, 1000), -1)],
+    "light_purple" : ["\033[1;35m", (14, _init_colour(1000, 400, 1000), -1)],
+    "light_cyan" : ["\033[1;36m", (15, _init_colour(400, 1000, 1000), -1)],
+    "light_white" : ["\033[1;37m", (16, _init_colour(800, 800, 800), -1)],
+
+    # todo: for curses these require additional parsing and attributes to be added to given text.
     "bold" : ["\033[1m", None], #(7, curses.A_BOLD, _init_colour(0, 0, 0))],
-    "faint" : ["\033[2m", None], # (8, curses.A_DIM, _init_colour(0, 0, 0))], # todo: test this actually works?
+    "faint" : ["\033[2m", None], # (8, curses.A_DIM, _init_colour(0, 0, 0))],
     "italic" : ["\033[3m", None], # (9, curses.A_ITALIC, _init_colour(0, 0, 0))],
     "underline" : ["\033[4m", None],# (10, curses.A_UNDERLINE, _init_colour(0, 0, 0))],
     "blink" : ["\033[5m", None], # (11, curses.A_BLINK, _init_colour(0, 0, 0))],
-    "negative" : ["\033[7m", None],# (12, curses.A_REVERSE, _init_colour(0, 0, 0))], # todo: test this actually works?
-    "crossed" : ["\033[9m", None], # (13, curses.A_PROTECT, _init_colour(0, 0, 0))], # todo: test this actually works?
+    "negative" : ["\033[7m", None],# (12, curses.A_REVERSE, _init_colour(0, 0, 0))], 
+    "crossed" : ["\033[9m", None], # (13, curses.A_PROTECT, _init_colour(0, 0, 0))],
     "end" : ["\033[0m", None],
 }
 
@@ -193,6 +194,11 @@ def open_tui(curses_text):
         stdscr.refresh()
 
         curses.start_color()
+        curses.use_default_colors()
+        col_default = len(ANSICodes)
+        col_status = len(ANSICodes)+1
+        curses.init_pair(col_default, _init_colour(800,800,800), -1)
+        curses.init_pair(col_status, _init_colour(0,0,0), _init_colour(800,800,800))
         for col in _init_colour.cols.values(): curses.init_color(*col)
         for k, v in ANSICodes.items():
             if k != "end": 
@@ -200,19 +206,6 @@ def open_tui(curses_text):
                 if v[1]: curses.init_pair(*v[1])
             else: ANSICodes[k] += [None]
         
-        col_default = len(ANSICodes)
-        col_status = len(ANSICodes)+1
-        
-        curses.init_pair(col_default, curses.COLOR_WHITE, curses.COLOR_BLACK)
-        curses.init_pair(col_status, curses.COLOR_BLACK, curses.COLOR_WHITE)
-
-        # for re_pat in [v[-1] for v in ANSICodes.values()]:
-        #     if re_pat:
-        #         for match in re_pat.finditer(curses_text):
-        #             curses_text = curses_text.replace(match.group(0), match.group(2), 1)
-                # curses_text = curses_text[0:span[0]]+match.groups()[0]+curses_text[span[1]:]
-            # curses_text = re_pat.sub(r"\2", curses_text, 100)
-
         lines = curses_text.splitlines()
         curses.curs_set(0)
 
@@ -244,7 +237,7 @@ def open_tui(curses_text):
                 delta = 0
                 matches = sorted(matches, key=lambda x: x[0].span()[0])
                 for match, v in matches:
-                    try: stdscr.addstr(num, match.span()[0]-delta, match.group(2), curses.color_pair(v[1][0] if v[1] else col_default))
+                    try: stdscr.addstr(num, match.span()[0]-delta, match.group(2), curses.A_BOLD|curses.color_pair((v[1][0]) if v[1] else col_default))
                     except: pass
                     delta += len(match.group(0))-len(match.group(2))
                     line = v[-1].sub(r"\2", line)
