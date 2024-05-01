@@ -49,7 +49,7 @@ def import_addons(printout=False):
                 print("failed to add '"+str(e)+"'. missing expected interface 'get_addon_name'.")
 
 
-def main():
+def main(override=""):
     if len(sys.argv) < 2 or "--help" in sys.argv or sys.argv[1] == "help":
         print("# tdb\n\nA text based database with tagging.\n\n```")
         print("Usage: py -m tdb [add | edit | rm | show | tui | template | open | listen] [text | options]")
@@ -72,10 +72,11 @@ def main():
         print(tomllib.load(open(dir+"/../pyproject.toml", "rb"))["project"]["version"])
         sys.exit(0)
 
-    command = tdb.cli.get_command()
-    options = tdb.cli.parse_options()
+    command = tdb.cli.get_command(override)
+    options = tdb.cli.parse_options(override)
     edit_ext = tdb.config.get('edit_ext')
     edit_ext = edit_ext if edit_ext else ".txt"
+
     if command == "add":
         text = tdb.cli.get_text()
         import_addons(printout=(text == ""))
@@ -91,7 +92,11 @@ def main():
         tdb.records.print_db_records(options)
     
     elif command == "tui":
-        tdb.cli.open_tui(tdb.records.stringify_db_records(options, True))
+        while True:
+            override_cmd = tdb.cli.open_tui(tdb.records.stringify_db_records(options, True))
+            if override_cmd: main(override_cmd)
+            else: break
+
 
     elif command == "open":
         if "config" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")

@@ -186,8 +186,9 @@ def open_tui(curses_text):
             print("Consider installing windows-curses:")
             print("\tpip install windows-curses")
         return
+    outcmd = ""
     def __curses_cli(stdscr):
-        nonlocal curses_text
+        nonlocal outcmd
         key = 0
         page_y = 0
         stdscr.clear()
@@ -219,6 +220,9 @@ def open_tui(curses_text):
             elif key == ord(' '):
                 if max_y == page_y: page_y = 0
                 else: page_y += height-1
+            elif key == ord('e'):
+                outcmd = ' '.join(["edit", *sys.argv[2:]])
+                break
             
             page_y = min(max_y, max(0, page_y))
 
@@ -247,7 +251,7 @@ def open_tui(curses_text):
                     line = v[-1].sub(r"\2", line)
                         
 
-            statusbarstr = f"'q': to exit | 'space': down | pos: {page_y}/{max_y}"
+            statusbarstr = f"'q': to exit | 'e' to edit | 'space': down | pos: {page_y}/{max_y} | {' '.join(sys.argv[2:])}"
             stdscr.attron(curses.color_pair(col_status))
             stdscr.addstr(height-1, 0, statusbarstr)
             stdscr.addstr(height-1, len(statusbarstr), " " * (width - len(statusbarstr) - 1))
@@ -257,3 +261,4 @@ def open_tui(curses_text):
             key = stdscr.getch()
     
     curses.wrapper(__curses_cli)
+    return outcmd
