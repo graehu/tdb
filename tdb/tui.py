@@ -54,7 +54,7 @@ def open_tui(options, edit_cmd):
         lines = curses_text.splitlines()
         curses.curs_set(0)
 
-        while (key != ord('q')):
+        while (key != ord('q')) or text_entry:
             stdscr.clear()
             height, width = stdscr.getmaxyx()
             max_y = max(0, len(lines)-(height-1))
@@ -67,6 +67,7 @@ def open_tui(options, edit_cmd):
                     lines = curses_text.splitlines()
                     max_y = max(0, len(lines)-(height-1))
                     text_entry = False
+                    curses.curs_set(0)
                 elif key not in [curses.KEY_ENTER, curses.KEY_BACKSPACE]:
                     query += chr(key)
             else:
@@ -77,6 +78,7 @@ def open_tui(options, edit_cmd):
                     else: page_y += height-1
                 elif key == ord('/'):
                     text_entry = True
+                    curses.curs_set(2)
                 elif key == ord('e'):
                     switch_call(edit_cmd, options)
                 
@@ -113,6 +115,7 @@ def open_tui(options, edit_cmd):
             stdscr.addstr(height-1, len(f"/{query}"), statusbarstr)
             stdscr.addstr(height-1, len(f"/{query}")+len(statusbarstr), " " * (width - (len(f"/{query}")+len(statusbarstr)) - 1))
             stdscr.attroff(curses.color_pair(col_status))
+            stdscr.move(height-1,len(f"/{query}") )
 
             stdscr.refresh()
             key = stdscr.getch()
