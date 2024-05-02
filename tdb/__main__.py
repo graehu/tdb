@@ -3,6 +3,7 @@ import os
 import tomllib
 import tdb.db
 import tdb.cli
+import tdb.tui
 import tdb.tags
 import tdb.config
 import tdb.records
@@ -48,6 +49,42 @@ def import_addons(printout=False):
             elif printout:
                 print("failed to add '"+str(e)+"'. missing expected interface 'get_addon_name'.")
 
+def edit(options):
+    if options:
+        import_addons()
+        edit_ext = tdb.config.get('edit_ext')
+        edit_ext = edit_ext if edit_ext else ".txt"
+        records = tdb.records.split_db_records(options)
+        content = "".join([str(r) for r in records])
+        update_called = False
+        def update_db(previous, text):
+            nonlocal content
+            nonlocal update_called
+            update_called = True
+            if not text or text[-1] != "\n": text += "\n"
+            old_records = tdb.records.split_records(previous)
+            new_records = tdb.records.split_records(text)
+            adds, mods, dels = tdb.records.modify_db_records(old_records, new_records)
+            if adds or mods or dels: print("".ljust(32, "="))
+            if adds: print(f"Inserted {adds} record{'s' if adds > 1 else ''}.")
+            if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
+            if dels: print(f"Archived {dels} record{'s' if dels > 1 else ''}.")
+
+            tdb.db.serialise()
+            dates = [r.date for r in tdb.records.split_records(text)]
+            text = "".join([str(r) for r in tdb.records.split_db_records() if r.date in dates])
+            content = text
+            return text
+
+        text = tdb.session.start("tdb_"+tdb.cli.get_safe_filename(), content, ext=edit_ext, update_cb=update_db)
+        if not update_called:
+            print("no changes made")
+            return
+        elif content != text:
+            update_db(content, text) # this should never happen.
+    else:
+        print("no records selected for edit, see options")
+        sys.exit(1)
 
 def main(override=""):
     if len(sys.argv) < 2 or "--help" in sys.argv or sys.argv[1] == "help":
@@ -92,11 +129,7 @@ def main(override=""):
         tdb.records.print_db_records(options)
     
     elif command == "tui":
-        while True:
-            override_cmd = tdb.cli.open_tui(tdb.records.stringify_db_records(options, True))
-            if override_cmd: main(override_cmd)
-            else: break
-
+        tdb.tui.open_tui(options, edit)
 
     elif command == "open":
         if "config" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
@@ -130,39 +163,7 @@ def main(override=""):
         sys.exit(1)
 
     elif command == "edit":
-        import_addons()
-        if options:
-            records = tdb.records.split_db_records(options)
-            content = "".join([str(r) for r in records])
-            update_called = False
-            def update_db(previous, text):
-                nonlocal content
-                nonlocal update_called
-                update_called = True
-                if not text or text[-1] != "\n": text += "\n"
-                old_records = tdb.records.split_records(previous)
-                new_records = tdb.records.split_records(text)
-                adds, mods, dels = tdb.records.modify_db_records(old_records, new_records)
-                if adds or mods or dels: print("".ljust(32, "="))
-                if adds: print(f"Inserted {adds} record{'s' if adds > 1 else ''}.")
-                if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
-                if dels: print(f"Archived {dels} record{'s' if dels > 1 else ''}.")
-
-                tdb.db.serialise()
-                dates = [r.date for r in tdb.records.split_records(text)]
-                text = "".join([str(r) for r in tdb.records.split_db_records() if r.date in dates])
-                content = text
-                return text
-
-            text = tdb.session.start("tdb_"+tdb.cli.get_safe_filename(), content, ext=edit_ext, update_cb=update_db)
-            if not update_called:
-                print("no changes made")
-                return
-            elif content != text:
-                update_db(content, text) # this should never happen.
-        else:
-            print("no records selected for edit, see options")
-            sys.exit(1)
+        edit(options)
 
     elif command == "template":
         import_addons()
