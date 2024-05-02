@@ -32,6 +32,7 @@ def open_tui(options, edit_cmd):
         key = 0
         page_y = 0
         query = tdb.cli.get_text()
+        curs_index = len(query)
         text_entry = False
         stdscr.clear()
         stdscr.refresh()
@@ -60,7 +61,10 @@ def open_tui(options, edit_cmd):
             max_y = max(0, len(lines)-(height-1))
             if text_entry:
                 if key == curses.KEY_BACKSPACE:
-                    query = query[:-1]
+                    query = query[:curs_index-1]+query[curs_index:]
+                    curs_index -= 1
+                elif key == curses.KEY_LEFT: curs_index -= 1
+                elif key == curses.KEY_RIGHT: curs_index += 1
                 elif key == curses.KEY_ENTER or key == 10 or key == 13:
                     options = tdb.cli.parse_options("tui "+query)
                     curses_text = tdb.records.stringify_db_records(options, True)
@@ -69,7 +73,9 @@ def open_tui(options, edit_cmd):
                     text_entry = False
                     curses.curs_set(0)
                 elif key not in [curses.KEY_ENTER, curses.KEY_BACKSPACE]:
-                    query += chr(key)
+                    query = query[:curs_index]+chr(key)+query[curs_index:]
+                    curs_index+=1
+                curs_index = max(min(len(query), curs_index), 0)
             else:
                 if key == curses.KEY_DOWN: page_y += 1
                 elif key == curses.KEY_UP: page_y -= 1
@@ -115,7 +121,7 @@ def open_tui(options, edit_cmd):
             stdscr.addstr(height-1, len(f"/{query}"), statusbarstr)
             stdscr.addstr(height-1, len(f"/{query}")+len(statusbarstr), " " * (width - (len(f"/{query}")+len(statusbarstr)) - 1))
             stdscr.attroff(curses.color_pair(col_status))
-            stdscr.move(height-1,len(f"/{query}") )
+            stdscr.move(height-1, curs_index+1)
 
             stdscr.refresh()
             key = stdscr.getch()

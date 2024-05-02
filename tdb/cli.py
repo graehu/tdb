@@ -123,7 +123,6 @@ def parse_options(override = ""):
 
 
 def parse_span(args):
-    import re
     now = datetime.now()
     operations = []
     
