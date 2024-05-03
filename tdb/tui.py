@@ -86,7 +86,7 @@ def open_tui(options, edit_cmd):
                     text_entry = True
                     curses.curs_set(2)
                 elif key == ord('e'):
-                    switch_call(edit_cmd, options)
+                    switch_call(edit_cmd, options, False)
                 
             page_y = min(max_y, max(0, page_y))
 

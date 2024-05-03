@@ -49,7 +49,8 @@ def import_addons(printout=False):
             elif printout:
                 print("failed to add '"+str(e)+"'. missing expected interface 'get_addon_name'.")
 
-def edit(options):
+
+def edit(options, can_exit=True):
     if options:
         import_addons()
         edit_ext = tdb.config.get('edit_ext')
@@ -82,7 +83,7 @@ def edit(options):
             return
         elif content != text:
             update_db(content, text) # this should never happen.
-    else:
+    elif can_exit:
         print("no records selected for edit, see options")
         sys.exit(1)
 
