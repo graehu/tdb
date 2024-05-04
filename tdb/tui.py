@@ -59,6 +59,13 @@ def open_tui(options, edit_cmd):
             stdscr.clear()
             height, width = stdscr.getmaxyx()
             max_y = max(0, len(lines)-(height-1))
+            def update_text():
+                nonlocal max_y, curses_text, options, lines
+                options = tdb.cli.parse_options("tui "+query)
+                curses_text = tdb.records.stringify_db_records(options, True)
+                lines = curses_text.splitlines()
+                max_y = max(0, len(lines)-(height-1))
+            
             if text_entry:
                 if key == curses.KEY_BACKSPACE:
                     query = query[:curs_index-1]+query[curs_index:]
@@ -66,10 +73,7 @@ def open_tui(options, edit_cmd):
                 elif key == curses.KEY_LEFT: curs_index -= 1
                 elif key == curses.KEY_RIGHT: curs_index += 1
                 elif key == curses.KEY_ENTER or key == 10 or key == 13:
-                    options = tdb.cli.parse_options("tui "+query)
-                    curses_text = tdb.records.stringify_db_records(options, True)
-                    lines = curses_text.splitlines()
-                    max_y = max(0, len(lines)-(height-1))
+                    update_text()
                     text_entry = False
                     curses.curs_set(0)
                 elif key not in [curses.KEY_ENTER, curses.KEY_BACKSPACE]:
@@ -87,6 +91,7 @@ def open_tui(options, edit_cmd):
                     curses.curs_set(2)
                 elif key == ord('e'):
                     switch_call(edit_cmd, options, False)
+                    update_text()
                 
             page_y = min(max_y, max(0, page_y))
 

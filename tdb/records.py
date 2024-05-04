@@ -272,6 +272,12 @@ def filter_records(records : list, options : list):
     max_id = len(records)
     filtered = records.copy()
 
+    if ctags := tdb.config.get("tags"):
+        for tag in ctags:
+            tops = [*options["otags"], *options["atags"], *options["ntags"]]
+            if "exclude" in ctags[tag] and ctags[tag]["exclude"] and not tag in tops:
+                options["ntags"].append(tag)
+
     dates = options["dates"] if options else []
     span = options["span"].copy() if options else []
     otags = options["otags"] if options else []

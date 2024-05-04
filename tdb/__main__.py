@@ -112,11 +112,6 @@ def main(override=""):
     
     command = tdb.cli.get_command(override)
     options = tdb.cli.parse_options(override)
-    if tags := tdb.config.get("tags"):
-        for tag in tags:
-            tops = [*options["otags"], *options["atags"], *options["ntags"]]
-            if "exclude" in tags[tag] and tags[tag]["exclude"] and not tag in tops:
-                options["ntags"].append(tag)
         
     edit_ext = tdb.config.get('edit_ext')
     edit_ext = edit_ext if edit_ext else ".txt"
