@@ -1,4 +1,5 @@
 import os
+import time
 import atexit
 import tdb.config
 
@@ -81,15 +82,21 @@ def append(text):
 
 
 def append_fileline(text, path):
-    f = open(path, "a+")
-    f.seek(0, os.SEEK_END)
-    f.seek(max(0, f.tell()-1)) # potential utf-8 issues
-    if f.read() != '\n' and text[0] != '\n':
-        f.write('\n'+text)
-    else:
-        f.write(text)
-    f.close()
-
+    while True:
+        try:
+            with open(path, "a+") as db:
+                db.seek(0, os.SEEK_END)
+                db.seek(max(0, db.tell()-1)) # potential utf-8 issues
+                if db.read() != '\n' and text[0] != '\n':
+                    db.write('\n'+text)
+                else:
+                    db.write(text)
+        except IOError as e:
+            if os.access() == os.R_OK: time.sleep(0.1); continue
+            else: print("unexpected IOError!\n"+str(e))
+        except Exception as e: print("unexpected exception!\n"+str(e))
+        break
+    
 
 def append_immediate(text):
     append_fileline(text, get_filename())
@@ -145,14 +152,24 @@ def serialise():
     db_head = _db_text if _db_inserts else ""
     perform_inserts()
 
-    if db_head and _db_mtime != os.path.getmtime(_db_file):
-        output = _db_merge_func(db_head, _db_text, open(get_filename()).read())
-        open(get_filename(), "w").write(output)
-        _db_text = output
-        if _db_has_conflicts:
-            print("@tdb_conflict has been added to affected records.")
-    elif db_head:
-        open(get_filename(), "w").write(_db_text)
+    while db_head:
+        try:
+            if db_head and _db_mtime != os.path.getmtime(_db_file):
+                with open(get_filename(), "rw") as db:
+                    output = _db_merge_func(db_head, _db_text, db.read())
+                    db.write(output)
+                    _db_text = output
+                    if _db_has_conflicts:
+                        print("@tdb_conflict has been added to affected records.")
+            else:
+                open(get_filename(), "w").write(_db_text)
+        
+        except IOError as e:
+            if os.access() == os.R_OK: time.sleep(0.1); continue
+            else: print("unexpected IOError!\n"+str(e))
+        except Exception as e: print("unexpected exception!\n"+str(e))
+        break
+    
     _db_mtime = os.path.getmtime(_db_file)
     _db_has_conflicts = False
 
