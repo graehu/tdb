@@ -67,9 +67,22 @@ def open_tui(options, edit_cmd):
                 max_y = max(0, len(lines)-(height-1))
             
             if text_entry:
+                # print_wait(f"pressed {chr(key)} ord {key}")
                 if key == curses.KEY_BACKSPACE:
                     query = query[:curs_index-1]+query[curs_index:]
                     curs_index -= 1
+                elif key == 8: pass #ctrl-backspace
+                elif key == ord('Ȉ'): pass #ctrl-delete
+                elif key == ord('Ȣ'): # ctrl-left
+                    while query[curs_index-1] == ' ' and curs_index-1 > 0: curs_index -= 1
+                    curs_index = len(query)-query[::-1].find(' ', len(query)-curs_index)
+                    curs_index = curs_index if curs_index < len(query) else 0
+                elif key == ord('ȱ'): # ctrl-right
+                    while curs_index < len(query) and query[curs_index] == ' ': curs_index += 1
+                    curs_index = query.find(' ', curs_index)
+                    curs_index = curs_index if curs_index > 0 else len(query)
+                elif key == curses.KEY_DC: # delete char
+                    query = query[:curs_index]+query[curs_index+1:]
                 elif key == curses.KEY_LEFT: curs_index -= 1
                 elif key == curses.KEY_RIGHT: curs_index += 1
                 elif key == curses.KEY_ENTER or key == 10 or key == 13:
