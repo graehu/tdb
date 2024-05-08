@@ -92,7 +92,11 @@ def open_tui(options, edit_cmd):
                     end = get_next(query, curs_index, forward=False) 
                     if end != curs_index: query = query[:end]+query[curs_index:]; curs_index = end
                     while curs_index-1 > 0 and query[curs_index-1] == ' ': query = query[:curs_index-1]+query[curs_index:]; curs_index -= 1
-                elif key == ord('Ȉ'): pass #ctrl-delete
+                elif key == ord('Ȉ'):
+                    end = get_next(query, curs_index) 
+                    if end != curs_index: query = query[:curs_index]+query[end:]
+                    while curs_index < len(query) and query[curs_index] == ' ': query = query[:curs_index]+query[curs_index+1:]
+                     #ctrl-delete
                 elif key == ord('ȱ'): curs_index = get_next(query, curs_index) # ctrl-right
                 elif key == ord('Ȣ'): curs_index = get_next(query, curs_index, forward=False) # ctrl-left
                 elif key == curses.KEY_LEFT: curs_index -= 1
