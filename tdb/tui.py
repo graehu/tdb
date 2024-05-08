@@ -4,6 +4,19 @@ import tdb.cli
 import tdb.records
 
 
+def get_next(text, start, char=" ", forward=True):
+    if forward:
+        while start < len(text) and text[start] == ' ': start += 1
+        start = text.find(' ', start)
+        start = start if start > 0 else len(text)
+
+    else:
+        while start-1 > 0 and text[start-1] == ' ': start -= 1
+        start = len(text)-text[::-1].find(' ', len(text)-start)
+        start = start if start < len(text) else 0
+    return start
+
+
 def open_tui(options, edit_cmd):
     try:
         import curses
@@ -75,16 +88,13 @@ def open_tui(options, edit_cmd):
                 elif key == curses.KEY_DC: # delete char
                     if curs_index != len(query):
                         query = query[:curs_index]+query[curs_index+1:]
-                elif key == 8: pass #ctrl-backspace
+                elif key == 8: # ctrl-backspace
+                    end = get_next(query, curs_index, forward=False) 
+                    if end != curs_index: query = query[:end]+query[curs_index:]; curs_index = end
+                    while curs_index-1 > 0 and query[curs_index-1] == ' ': query = query[:curs_index-1]+query[curs_index:]; curs_index -= 1
                 elif key == ord('Ȉ'): pass #ctrl-delete
-                elif key == ord('Ȣ'): # ctrl-left
-                    while query[curs_index-1] == ' ' and curs_index-1 > 0: curs_index -= 1
-                    curs_index = len(query)-query[::-1].find(' ', len(query)-curs_index)
-                    curs_index = curs_index if curs_index < len(query) else 0
-                elif key == ord('ȱ'): # ctrl-right
-                    while curs_index < len(query) and query[curs_index] == ' ': curs_index += 1
-                    curs_index = query.find(' ', curs_index)
-                    curs_index = curs_index if curs_index > 0 else len(query)
+                elif key == ord('ȱ'): curs_index = get_next(query, curs_index) # ctrl-right
+                elif key == ord('Ȣ'): curs_index = get_next(query, curs_index, forward=False) # ctrl-left
                 elif key == curses.KEY_LEFT: curs_index -= 1
                 elif key == curses.KEY_RIGHT: curs_index += 1
                 elif key == curses.KEY_ENTER or key == 10 or key == 13:
