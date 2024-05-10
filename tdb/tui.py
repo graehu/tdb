@@ -27,6 +27,7 @@ def open_tui(options, edit_cmd):
             print("\tpip install windows-curses")
         return
     outcmd = ""
+
     def __curses_cli(stdscr):
         nonlocal outcmd
         nonlocal options
@@ -68,6 +69,17 @@ def open_tui(options, edit_cmd):
         lines = curses_text.splitlines()
         curses.curs_set(0)
 
+        class Key:
+            def backspace(key): return key == (127 if platform.system() == "linux" else 8)
+            def delete(key): return key == 330
+            def right(key): return key == 261
+            def left(key): return key == 260
+            def ctrl_backspace(key): return key == (8 if platform.system() == "linux" else 127)
+            def ctrl_delete(key): return key == (ord('Ȉ') if platform.system() == "linux" else 527)
+            def ctrl_left(key): return key == (ord('Ȣ') if platform.system() == "linux" else 443)
+            def ctrl_right(key): return key == (ord('ȱ') if platform.system() == "linux" else 444)
+            def enter(key): return key == curses.KEY_ENTER or key == 10 or key == 13
+
         while (key != ord('q')) or text_entry:
             stdscr.clear()
             height, width = stdscr.getmaxyx()
@@ -81,27 +93,31 @@ def open_tui(options, edit_cmd):
             
             if text_entry:
                 # print_wait(f"pressed {chr(key)} ord {key}")
-                if key == curses.KEY_BACKSPACE:
+
+                if Key.backspace(key): 
                     if curs_index != 0:
                         query = query[:curs_index-1]+query[curs_index:]
                         curs_index -= 1
-                elif key == curses.KEY_DC: # delete char
+
+                elif Key.delete(key):
                     if curs_index != len(query):
                         query = query[:curs_index]+query[curs_index+1:]
-                elif key == 8: # ctrl-backspace
+
+                elif Key.ctrl_backspace(key):
                     end = get_next(query, curs_index, forward=False) 
                     if end != curs_index: query = query[:end]+query[curs_index:]; curs_index = end
                     while curs_index-1 > 0 and query[curs_index-1] == ' ': query = query[:curs_index-1]+query[curs_index:]; curs_index -= 1
-                elif key == ord('Ȉ'):
+
+                elif Key.ctrl_delete(key): #ctrl-delete
                     end = get_next(query, curs_index) 
                     if end != curs_index: query = query[:curs_index]+query[end:]
                     while curs_index < len(query) and query[curs_index] == ' ': query = query[:curs_index]+query[curs_index+1:]
-                     #ctrl-delete
-                elif key == ord('ȱ'): curs_index = get_next(query, curs_index) # ctrl-right
-                elif key == ord('Ȣ'): curs_index = get_next(query, curs_index, forward=False) # ctrl-left
-                elif key == curses.KEY_LEFT: curs_index -= 1
-                elif key == curses.KEY_RIGHT: curs_index += 1
-                elif key == curses.KEY_ENTER or key == 10 or key == 13:
+                     
+                elif Key.ctrl_right(key): curs_index = get_next(query, curs_index)
+                elif Key.ctrl_left(key): curs_index = get_next(query, curs_index, forward=False) 
+                elif Key.left(key): curs_index -= 1
+                elif Key.right(key): curs_index += 1
+                elif Key.enter(key):
                     update_text()
                     text_entry = False
                     curses.curs_set(0)
