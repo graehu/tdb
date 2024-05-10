@@ -6,13 +6,13 @@ import tdb.records
 
 def get_next(text, start, char=" ", forward=True):
     if forward:
-        while start < len(text) and text[start] == ' ': start += 1
-        start = text.find(' ', start)
+        while start < len(text) and text[start] == char: start += 1
+        start = text.find(char, start)
         start = start if start > 0 else len(text)
 
     else:
-        while start-1 > 0 and text[start-1] == ' ': start -= 1
-        start = len(text)-text[::-1].find(' ', len(text)-start)
+        while start-1 > 0 and text[start-1] == char: start -= 1
+        start = len(text)-text[::-1].find(char, len(text)-start)
         start = start if start < len(text) else 0
     return start
 
