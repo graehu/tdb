@@ -27,6 +27,7 @@ def open_tui(options, edit_cmd):
             print("\tpip install windows-curses")
         return
     outcmd = ""
+    is_linux = platform.system() == "Linux"
 
     def __curses_cli(stdscr):
         nonlocal outcmd
@@ -70,15 +71,15 @@ def open_tui(options, edit_cmd):
         curses.curs_set(0)
 
         class Key:
-            def backspace(key): return key == (127 if platform.system() == "linux" else 8)
+            def backspace(key): return key == (263 if is_linux else 8)
             def delete(key): return key == 330
             def right(key): return key == 261
             def left(key): return key == 260
-            def ctrl_backspace(key): return key == (8 if platform.system() == "linux" else 127)
-            def ctrl_delete(key): return key == (ord('Ȉ') if platform.system() == "linux" else 527)
-            def ctrl_left(key): return key == (ord('Ȣ') if platform.system() == "linux" else 443)
-            def ctrl_right(key): return key == (ord('ȱ') if platform.system() == "linux" else 444)
-            def enter(key): return key == curses.KEY_ENTER or key == 10 or key == 13
+            def ctrl_backspace(key): return key == (8 if is_linux else 127)
+            def ctrl_delete(key): return key == (520 if is_linux else 527)
+            def ctrl_left(key): return key == (546 if is_linux else 443)
+            def ctrl_right(key): return key == (561 if is_linux else 444)
+            def enter(key): return key == 10 or key == 13
 
         while (key != ord('q')) or text_entry:
             stdscr.clear()
