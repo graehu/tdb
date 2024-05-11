@@ -44,6 +44,8 @@ def import_addons(printout=False):
                 if "addon_tag" in mod_vars:
                     if printout: print(f"Registering '@{module.get_addon_name()}' cmds.")
                     tdb.tags.register_cmd(module.get_addon_name(), module.addon_tag)
+                if "addon_tui" in mod_vars:
+                    tdb.tui.register_cmd(module.get_addon_name(), module.addon_tui)
                 if "addon_record" in mod_vars:
                     tdb.records.register_cmd(module.addon_record)
             elif printout:
@@ -155,6 +157,7 @@ def main(override=""):
         tdb.records.print_db_records(options)
     
     elif command == "tui":
+        import_addons()
         tdb.tui.open_tui(options, edit, rm)
 
     elif command == "open":

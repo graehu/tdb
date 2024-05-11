@@ -74,7 +74,6 @@ class Record(object):
 def register_cmd(func):
     global _record_cmds
     _record_cmds.append(func)
-    pass
 
 
 def make_record(date, text):

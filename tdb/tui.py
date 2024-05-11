@@ -3,6 +3,27 @@ import platform
 import tdb.db
 import tdb.cli
 import tdb.records
+import tdb.tags
+
+_cmd_tags = {}
+
+def register_cmd(tag, func):
+    _cmd_tags[tag] = func
+
+
+def parse_cmd(cmdline, text, context="tui"):
+    tags = tdb.tags.find_tags(cmdline)
+    for tag in tags:
+        if tag[0] in _cmd_tags:
+            text = _cmd_tags[tag[0]](context, text, tag[1])
+    return text
+
+def update_db(previous, text):
+    if not text or text[-1] != "\n": text += "\n"
+    old_records = tdb.records.split_records(previous)
+    new_records = tdb.records.split_records(text)
+    tdb.records.modify_db_records(old_records, new_records)
+
 
 def get_next(text, start, char=" ", forward=True):
     if forward:
@@ -47,8 +68,9 @@ def open_tui(options, edit_cmd, rm_cmd):
         key = 0
         page_y = 0
         query = tdb.cli.get_text()
+        last_query = query
         curs_index = len(query)
-        text_entry = False
+        text_entry = None
         stdscr.clear()
         stdscr.refresh()
 
@@ -110,7 +132,7 @@ def open_tui(options, edit_cmd, rm_cmd):
                     if end != curs_index: query = query[:end]+query[curs_index:]; curs_index = end
                     while curs_index-1 > 0 and query[curs_index-1] == ' ': query = query[:curs_index-1]+query[curs_index:]; curs_index -= 1
 
-                elif Key.ctrl_delete(key): #ctrl-delete
+                elif Key.ctrl_delete(key):
                     end = get_next(query, curs_index) 
                     if end != curs_index: query = query[:curs_index]+query[end:]
                     while curs_index < len(query) and query[curs_index] == ' ': query = query[:curs_index]+query[curs_index+1:]
@@ -120,8 +142,15 @@ def open_tui(options, edit_cmd, rm_cmd):
                 elif Key.left(key): curs_index -= 1
                 elif Key.right(key): curs_index += 1
                 elif Key.enter(key):
+                    if text_entry == "cmd":
+                        opts = options
+                        opts["as"] = None
+                        before = tdb.records.stringify_db_records()
+                        after = parse_cmd(" @"+query, before)
+                        update_db(before, after)
+                        query = last_query
                     update_text()
-                    text_entry = False
+                    text_entry = None
                     curses.curs_set(0)
                 elif key not in [curses.KEY_ENTER, curses.KEY_BACKSPACE]:
                     query = query[:curs_index]+chr(key)+query[curs_index:]
@@ -134,7 +163,13 @@ def open_tui(options, edit_cmd, rm_cmd):
                     if max_y == page_y: page_y = 0
                     else: page_y += height-1
                 elif key == ord('/'):
-                    text_entry = True
+                    text_entry = "query"
+                    curses.curs_set(2)
+                elif key == ord('@'):
+                    text_entry = "cmd"
+                    last_query = query
+                    query = ""
+                    curs_index = 0
                     curses.curs_set(2)
                 elif key == ord('e'):
                     switch_call(edit_cmd, options, False)
@@ -169,9 +204,9 @@ def open_tui(options, edit_cmd, rm_cmd):
                     delta += len(match.group(0))-len(match.group(2))
                     line = v[-1].sub(r"\2", line)
                         
-            
-            stdscr.addstr(height-1, 0, f"/{query}", (curses.A_BOLD|curses.A_ITALIC if text_entry else 0)|curses.color_pair(col_status))
-            statusbarstr = f" | 'e' to edit | 'r' to rm | 'space': down | 'q': to exit | pos: {page_y}/{max_y}"
+            opchar = "@" if text_entry == "cmd" else "/"
+            stdscr.addstr(height-1, 0, f"{opchar}{query}", (curses.A_BOLD|curses.A_ITALIC if text_entry else 0)|curses.color_pair(col_status))
+            statusbarstr = f" | '@' to enter cmd | 'e' to edit | 'r' to rm | 'space': down | 'q': to exit | pos: {page_y}/{max_y}"
             stdscr.attron(curses.color_pair(col_status))
             stdscr.addstr(height-1, len(f"/{query}"), statusbarstr)
             stdscr.addstr(height-1, len(f"/{query}")+len(statusbarstr), " " * (width - (len(f"/{query}")+len(statusbarstr)) - 1))

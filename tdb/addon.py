@@ -6,6 +6,9 @@ import tdb.html
 
 def get_addon_name(): return "tdb"
 
+def addon_tui(context, text, args):
+    return addon_tag(context, text, args)
+
 def addon_tag(context, text, args):
     print(context+" : "+str((get_addon_name(), args)))
     try:
