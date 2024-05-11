@@ -145,7 +145,7 @@ def open_tui(options, edit_cmd, rm_cmd):
                     if text_entry == "cmd":
                         opts = options
                         opts["as"] = None
-                        before = tdb.records.stringify_db_records()
+                        before = tdb.records.stringify_db_records(opts)
                         after = parse_cmd(" @"+query, before)
                         update_db(before, after)
                         query = last_query
