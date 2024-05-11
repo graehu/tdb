@@ -87,6 +87,30 @@ def edit(options, can_exit=True):
         print("no records selected for edit, see options")
         sys.exit(1)
 
+def rm(options, can_exit=True):
+    if options:
+        records = tdb.records.split_db_records(options)
+        if records:
+            tdb.records.print_records(records, {"as":"list"})
+            while True:
+                response = input(f"Archive {len(records)} record{'s' if len(records) > 1 else ''}? (y/n): ").lower()
+                if response in ["yes", "y"]: response = True
+                elif response in ["no", "n"]: response = False
+                if isinstance(response, bool): break
+            
+            if response and tdb.records.archive_records(records):
+                print(f"Archived {len(records)} record{'s' if len(records) > 1 else ''}.")
+            else: print("Nothing archived")
+
+
+        else:
+            print("no records matching options.")
+        if can_exit: sys.exit(0)
+
+    print("archive requires options e.g. @mytag")
+    if can_exit: sys.exit(1)
+
+
 def main(override=""):
     if len(sys.argv) < 2 or "--help" in sys.argv or sys.argv[1] == "help":
         print("# tdb\n\nA text based database with tagging.\n\n```")
@@ -131,7 +155,7 @@ def main(override=""):
         tdb.records.print_db_records(options)
     
     elif command == "tui":
-        tdb.tui.open_tui(options, edit)
+        tdb.tui.open_tui(options, edit, rm)
 
     elif command == "open":
         if "config" in sys.argv: tdb.cli.run(f"{tdb.config.get('editor')} {tdb.config.get_filename()}")
@@ -142,27 +166,28 @@ def main(override=""):
             sys.exit(1)
     
     elif command == "rm":
-        if options:
-            records = tdb.records.split_db_records(options)
-            if records:
-                tdb.records.print_records(records, {"as":"list"})
-                while True:
-                    response = input(f"Archive {len(records)} record{'s' if len(records) > 1 else ''}? (y/n): ").lower()
-                    if response in ["yes", "y"]: response = True
-                    elif response in ["no", "n"]: response = False
-                    if isinstance(response, bool): break
+        rm(options)
+        # if options:
+        #     records = tdb.records.split_db_records(options)
+        #     if records:
+        #         tdb.records.print_records(records, {"as":"list"})
+        #         while True:
+        #             response = input(f"Archive {len(records)} record{'s' if len(records) > 1 else ''}? (y/n): ").lower()
+        #             if response in ["yes", "y"]: response = True
+        #             elif response in ["no", "n"]: response = False
+        #             if isinstance(response, bool): break
                 
-                if response and tdb.records.archive_records(records):
-                    print(f"Archived {len(records)} record{'s' if len(records) > 1 else ''}.")
-                else: print("Nothing archived")
+        #         if response and tdb.records.archive_records(records):
+        #             print(f"Archived {len(records)} record{'s' if len(records) > 1 else ''}.")
+        #         else: print("Nothing archived")
 
 
-            else:
-                print("no records matching options.")
-            sys.exit(0)
+        #     else:
+        #         print("no records matching options.")
+        #     sys.exit(0)
         
-        print("archive requires options e.g. @mytag")
-        sys.exit(1)
+        # print("archive requires options e.g. @mytag")
+        # sys.exit(1)
 
     elif command == "edit":
         edit(options)

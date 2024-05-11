@@ -1,8 +1,8 @@
 import re
 import platform
+import tdb.db
 import tdb.cli
 import tdb.records
-
 
 def get_next(text, start, char=" ", forward=True):
     if forward:
@@ -17,7 +17,7 @@ def get_next(text, start, char=" ", forward=True):
     return start
 
 
-def open_tui(options, edit_cmd):
+def open_tui(options, edit_cmd, rm_cmd):
     try:
         import curses
     except:
@@ -87,6 +87,7 @@ def open_tui(options, edit_cmd):
             max_y = max(0, len(lines)-(height-1))
             def update_text():
                 nonlocal max_y, curses_text, options, lines
+                tdb.db.serialise()
                 options = tdb.cli.parse_options("tui "+query)
                 curses_text = tdb.records.stringify_db_records(options, True)
                 lines = curses_text.splitlines()
@@ -138,6 +139,9 @@ def open_tui(options, edit_cmd):
                 elif key == ord('e'):
                     switch_call(edit_cmd, options, False)
                     update_text()
+                elif key == ord('r'):
+                    switch_call(rm_cmd, options, False)
+                    update_text()
                 
             page_y = min(max_y, max(0, page_y))
 
@@ -167,7 +171,7 @@ def open_tui(options, edit_cmd):
                         
             
             stdscr.addstr(height-1, 0, f"/{query}", (curses.A_BOLD|curses.A_ITALIC if text_entry else 0)|curses.color_pair(col_status))
-            statusbarstr = f" | 'e' to edit | 'space': down | 'q': to exit | pos: {page_y}/{max_y}"
+            statusbarstr = f" | 'e' to edit | 'r' to rm | 'space': down | 'q': to exit | pos: {page_y}/{max_y}"
             stdscr.attron(curses.color_pair(col_status))
             stdscr.addstr(height-1, len(f"/{query}"), statusbarstr)
             stdscr.addstr(height-1, len(f"/{query}")+len(statusbarstr), " " * (width - (len(f"/{query}")+len(statusbarstr)) - 1))
