@@ -69,6 +69,7 @@ def open_tui(options, edit_cmd, rm_cmd):
         page_y = 0
         query = tdb.cli.get_text()
         last_query = query
+        last_cmd = None
         curs_index = len(query)
         text_entry = None
         stdscr.clear()
@@ -148,6 +149,7 @@ def open_tui(options, edit_cmd, rm_cmd):
                         before = tdb.records.stringify_db_records(opts)
                         after = parse_cmd(" @"+query, before)
                         update_db(before, after)
+                        last_cmd = query
                         query = last_query
                     update_text()
                     text_entry = None
@@ -168,8 +170,8 @@ def open_tui(options, edit_cmd, rm_cmd):
                 elif key == ord('@'):
                     text_entry = "cmd"
                     last_query = query
-                    query = ""
-                    curs_index = 0
+                    query = last_cmd if last_cmd else ""
+                    curs_index = len(query)
                     curses.curs_set(2)
                 elif key == ord('e'):
                     switch_call(edit_cmd, options, False)
