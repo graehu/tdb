@@ -207,11 +207,20 @@ def open_tui(options, edit_cmd, rm_cmd):
                     line = v[-1].sub(r"\2", line)
                         
             opchar = "@" if text_entry == "cmd" else "/"
-            stdscr.addstr(height-1, 0, f"{opchar}{query}", (curses.A_BOLD|curses.A_ITALIC if text_entry else 0)|curses.color_pair(col_status))
+            opstr = f"{opchar}{query}"
+            oplen = len(opstr)
+            if oplen >= width:
+                opstr = opstr[0:max(0, width-1)]
+                oplen = len(opstr)
+            stdscr.addstr(height-1, 0, opstr, (curses.A_BOLD|curses.A_ITALIC if text_entry else 0)|curses.color_pair(col_status))
             statusbarstr = f" | '@' to enter cmd | 'e' to edit | 'r' to rm | 'space': down | 'q': to exit | pos: {page_y}/{max_y}"
+            barlen = len(statusbarstr)
+            if barlen+oplen >= width:
+                statusbarstr = statusbarstr[0:max(0, (width-oplen)-1)]
+                barlen = len(statusbarstr)
             stdscr.attron(curses.color_pair(col_status))
-            stdscr.addstr(height-1, len(f"/{query}"), statusbarstr)
-            stdscr.addstr(height-1, len(f"/{query}")+len(statusbarstr), " " * (width - (len(f"/{query}")+len(statusbarstr)) - 1))
+            stdscr.addstr(height-1, oplen, statusbarstr)
+            stdscr.addstr(height-1, oplen+barlen, " " * (width - (oplen+barlen) - 1))
             stdscr.attroff(curses.color_pair(col_status))
             stdscr.move(height-1, curs_index+1)
 
