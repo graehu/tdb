@@ -1,5 +1,6 @@
 import shlex
 import json
+import random
 import tdb.tags
 import tdb.records
 import tdb.html
@@ -18,10 +19,15 @@ def addon_tag(context, text, args):
         split_args = []
     
     if split_args:
-        if split_args[0] in ["add", "rm"]: text = tdb.tags.replace_tag(text, (get_addon_name(), args), "") 
-        if split_args[0] == "rm": text = remove_tag_cmd(text, split_args[1:])
-        elif split_args[0] == "add": text = add_tag_cmd(text, split_args[1:])
-        elif split_args[0] == "export": text = export_cmd(text, split_args[1:])
+        if context in ["tui", "update"]:
+            if split_args[0] in ["add", "rm"]: text = tdb.tags.replace_tag(text, (get_addon_name(), args), "") 
+            if split_args[0] == "rm": text = remove_tag_cmd(text, split_args[1:])
+            elif split_args[0] == "add": text = add_tag_cmd(text, split_args[1:])
+            elif split_args[0] == "export": text = export_cmd(text, split_args[1:])
+        if split_args[0] == "random":
+            line = f"\n@{get_addon_name()}: random {random.random()}"
+            text = tdb.tags.replace_tag(text, (get_addon_name(), args), line)
+        
     else:
         text = tdb.tags.replace_tag(text, (get_addon_name(), args), "")
     return text
