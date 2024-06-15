@@ -229,5 +229,12 @@ if __name__ == "__main__":
         del sys.argv[1]
         import cProfile
         cProfile.run("main()")
+    elif len(sys.argv) > 1 and sys.argv[1] == "--timed": 
+        import time
+        import datetime
+        del sys.argv[1]
+        start = time.time()
+        main()
+        print(f"time: {datetime.timedelta(seconds=time.time()-start)}")     
     else:
         main()

@@ -12,10 +12,15 @@ def register(tags):
         if not tag[0] in _config:
             _config[tag[0]] = {"colour": "light_white"}
 
+def get_coloured() -> list:
+    coloured = [tag for tag in _config if "colour" in _config[tag]]
+    return coloured
 
 def get_colour(tag) -> str:
     if not tag in _config: return "light_white"
-    col = _config[tag]["colour"]
+    col = "light_white"
+    if "colour" in _config[tag]:
+        col = _config[tag]["colour"]
     if not col in _colours:
         print(f"warning: '{tag}' has invalid colour '{col}'")
         col = "light_white"

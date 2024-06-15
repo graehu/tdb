@@ -248,11 +248,11 @@ def stringify_records(records:list, options:dict=None, ansi_colours=False):
         out = out.strip()
 
     if ansi_colours:
-        for tag in tdb.tags.find_tags(out):
-            col = tdb.cli.ANSICodes[tdb.tags.get_colour(tag[0])][0]
-            end = tdb.cli.ANSICodes["end"][0]
-            out = re.sub(f"(?!{re.escape(col)})@"+tag[0]+f"(?!{re.escape(end)})", col+"@"+tag[0]+end, out)
-            # out = out.replace("@"+tag[0], col+"@"+tag[0]+tdb.cli.ANSICodes["end"][0])
+        for tag in tdb.tags.get_coloured():
+            if tdb.tags.contains_tag(out, tag):
+                col = tdb.cli.ANSICodes[tdb.tags.get_colour(tag)][0]
+                end = tdb.cli.ANSICodes["end"][0]
+                out = re.sub(f"(?!{re.escape(col)})@"+tag+f"(?!{re.escape(end)})", col+"@"+tag+end, out)
         # TODO: the [tdb:\1] here feels like it could be done better. Also, config colour for tdb header?
         out = re_iso_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)
     
