@@ -42,6 +42,7 @@ def convert_headers(text):
 
 class Record(object):
     text = ""
+    text_hash = 0
     time = 0
     date = None
     tags = []
@@ -55,6 +56,7 @@ class Record(object):
         self.tags = tags
         self.span = span
         self.time = time
+        self.text_hash = hash(text)
 
     def __str__(self):
         if _force_hex:
@@ -110,36 +112,46 @@ def modify_db_records(old_records:list, new_records:list):
     dedupe = deduplicate_records(new_records)
     if len(new_records) != len(dedupe): print("Warning: duplicate dates found. Ignoring those entries.")
     new_records = dedupe
-    found = []
     mods = adds = dels = 0
-    for r1 in new_records:
-        modified = None
-        new = True
-        for r2 in old_records:
-            if str(r1) != str(r2) and r1.iso_str() == r2.iso_str():
-                modified = r2
-                found.append(r2)
-                new = False
-                break
-            elif r1.iso_str() == r2.iso_str():
-                found.append(r2)
-                new = False
-                break
-        
-        if modified:
-            tdb.db.replace(r2.entry(), r1.entry()); mods += 1
-        elif new:
-            # print(f"new: {r1}")
-            # for r2 in old_records:
-            #     print((r1.iso_str()," != ",r2.iso_str()))
-            tdb.db.append(r1.entry()); adds+=1
-            pass
-    for r1 in old_records:
-        if not r1 in found:
-            # print(f"del: {r1}")
-            tdb.db.archive(r1.entry()); dels+=1
-            pass
+    def is_datesame(r1, r2): return r1.date == r2.date
+    def is_equal(r1, r2): return r1.text_hash == r2.text_hash and is_datesame(r1, r2)
+    def is_mod(r1, r2): return not is_equal(r1, r2) and is_datesame(r1, r2)
+    def filter_newmods(new_rec):
+        for old_rec in old_records:
+            if is_mod(new_rec, old_rec): return True
+        return False
     
+    def filter_oldmods(old_rec):
+        for new_rec in new_records:
+            if is_mod(new_rec, old_rec): return True
+        return False
+    
+    def filter_adds(new_rec):
+        for old_rec in old_records:
+            if is_datesame(new_rec, old_rec): return False
+        return True
+    
+    def filter_dels(old_rec):
+        for new_rec in new_records:
+            if is_datesame(new_rec, old_rec): return False
+        return True
+    
+    
+    newmod_list = filter(filter_newmods, new_records)
+    oldmod_list = filter(filter_oldmods, old_records)
+    add_list = filter(filter_adds, new_records)
+    del_list = filter(filter_dels, old_records)
+    
+    for r1 in newmod_list:
+        for r2 in oldmod_list:
+            if is_datesame(r1, r2):
+                tdb.db.replace(r2.entry(), r1.entry())
+                mods += 1
+                break
+
+    for r1 in add_list: tdb.db.append(r1.entry()); adds+=1
+    for r1 in del_list: tdb.db.archive(r1.entry()); dels+=1
+
     for r in _record_cmds: r("".join(map(str,new_records)))
     return adds, mods, dels
 
