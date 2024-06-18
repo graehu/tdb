@@ -11,7 +11,7 @@ def addon_tui(context, text, args):
     return addon_tag(context, text, args)
 
 def addon_tag(context, text, args):
-    print(context+" : "+str((get_addon_name(), args)))
+    print(f"tdb:tag {context} : {str((get_addon_name(), args))}")
     try:
         # TODO this used to be args.lower(), make sure removing that didn't break tags.
         split_args = shlex.split(args)
@@ -27,13 +27,13 @@ def addon_tag(context, text, args):
         if split_args[0] == "random":
             line = f"\n@{get_addon_name()}: random {random.random()}"
             text = tdb.tags.replace_tag(text, (get_addon_name(), args), line)
-        
     else:
         text = tdb.tags.replace_tag(text, (get_addon_name(), args), "")
     return text
 
-def addon_record(text):
-    pass
+def addon_record(context, record):
+    # print(f"tdb:record {context} : {str(record)[:-1]}")
+    return record
 
 def add_tag_cmd(text, args):
     records = tdb.records.split_records(text)

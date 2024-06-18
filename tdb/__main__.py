@@ -27,9 +27,11 @@ def import_addon(file_path):
     
     return None
 
-
+__addons_imported = False
 def import_addons(printout=False):
-
+    global __addons_imported
+    if __addons_imported: return
+    __addons_imported = True
     if not tdb.config.get("addons"):
         if printout:
             print(f"No addons found in '{tdb.config.get_filename()}'")

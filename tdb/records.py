@@ -94,7 +94,6 @@ def add_record(text, start_time = None):
     tdb.db.append_immediate(record)
     tdb.db.archive(record, False)
 
-    for r in _record_cmds: r(text)
     return True
 
 
@@ -141,18 +140,20 @@ def modify_db_records(old_records:list, new_records:list):
     oldmod_list = filter(filter_oldmods, old_records)
     add_list = filter(filter_adds, new_records)
     del_list = filter(filter_dels, old_records)
+
+    mod_list = zip(newmod_list, oldmod_list)
+    for r1, r2 in mod_list:
+        assert(is_datesame(r1, r2))
+        for r in _record_cmds: r1 = r("mod", r1)
+        tdb.db.replace(r2.entry(), r1.entry()); mods += 1
+
+    for r1 in add_list:
+        for r in _record_cmds: r1 = r("add", r1)
+        tdb.db.append(r1.entry()); adds+=1
     
-    for r1 in newmod_list:
-        for r2 in oldmod_list:
-            if is_datesame(r1, r2):
-                tdb.db.replace(r2.entry(), r1.entry())
-                mods += 1
-                break
-
-    for r1 in add_list: tdb.db.append(r1.entry()); adds+=1
-    for r1 in del_list: tdb.db.archive(r1.entry()); dels+=1
-
-    for r in _record_cmds: r("".join(map(str,new_records)))
+    for r1 in del_list:
+        tdb.db.archive(r1.entry()); dels+=1
+        for r in _record_cmds: r1 = r("del", r1)
     return adds, mods, dels
 
 def archive_records(records: list):
