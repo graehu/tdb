@@ -237,6 +237,8 @@ def stringify_records(records:list, options:dict=None, ansi_colours=False):
     if options and options["as"] == "json":
         res = [r.asdict() for r in records]
         out = json.dumps(res, indent=2)
+    elif options and options["as"] == "raw":
+        out = "".join([r.entry() for r in records]).strip()
     elif options and options["as"] == "html":
         out = tdb.html.build_html(list(reversed(records)))
     elif options and options["as"] == "html_entries":
@@ -268,6 +270,7 @@ def stringify_records(records:list, options:dict=None, ansi_colours=False):
                 out = re.sub(f"(?!{re.escape(col)})@"+tag+f"(?!{re.escape(end)})", col+"@"+tag+end, out)
         # TODO: the [tdb:\1] here feels like it could be done better. Also, config colour for tdb header?
         out = re_iso_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)
+        out = re_hex_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)
     
     return out
 
