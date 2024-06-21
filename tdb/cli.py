@@ -83,6 +83,7 @@ def print_options():
     print("Options:")
     print("span: ".ljust(16)+"The records to select, example: span:7d is the last 7 days.")
     print("as: ".ljust(16)+"The format to see the records in. Only valid for show currently. [html, json, list, tags]")
+    print("md: ".ljust(16)+"Show text inside the named markdown section.")
     print("@{tag}: ".ljust(16)+"This tag or any others must be included, example: @notes @school, records must have either.")
     print("+@{tag}: ".ljust(16)+"This tag and any others must be included. i.e. +@notes +@school, records must have both.")
     print("-@{tag}: ".ljust(16)+"This tag must not be included. i.e. -@notes @school, records for school, no notes.")
@@ -104,10 +105,11 @@ def parse_options(override = ""):
     ntags = []
     span = []
     format = ""
+    md = ""
     if splits:
         for split in splits:
             if split.startswith("span:"): span = parse_span(split[len("span:"):].split(",",maxsplit=2))
-            elif split.startswith("as:"): format = split[len("as:"):].lower()
+            elif split.startswith("md:"): md = split[len("md:"):].lower()
             elif split.startswith("+@"): atags.append(split[2:].lower())
             elif split.startswith("-@"): ntags.append(split[2:].lower())
             elif split.startswith("@"): otags.append(split[1:].lower())
@@ -119,7 +121,7 @@ def parse_options(override = ""):
 
     return {"dates":dates, "otags":otags, "atags":atags, "ntags":ntags,
             "acontains":acontains, "ocontains":ocontains, "ncontains":ncontains,
-            "span":span, "as":format}
+            "span":span, "as":format, "md":md}
 
 
 def parse_span(args):

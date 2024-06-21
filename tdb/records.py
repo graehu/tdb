@@ -48,6 +48,7 @@ class Record(object):
     date = None
     tags = []
     span = (0,0)
+    md_text = ""
     def __init__(self, text, time, ending, date, tags, span):
         self.text = text
         if isinstance(date, str):
@@ -59,6 +60,7 @@ class Record(object):
         self.time = time
         self.text_hash = hash(text)
         self.ending = ending
+        self.md_text = text
 
     def __str__(self):
         if _force_hex:
@@ -70,9 +72,15 @@ class Record(object):
 
     def entry(self):
         return f"[tdb:{hex(self.time)}] {self.text}"+self.ending
+
+    def md(self):
+        return f"[tdb:{self.iso_str()}] {self.md_text}"+self.ending
+
     
     def asdict(self):
-        return {'text': self.text, 'time': self.time, 'date': self.date.isoformat(" "), 'tags': self.tags, 'span':self.span }
+        return {'text': self.text, 'time': self.time,
+                'date': self.date.isoformat(" "), 'tags': self.tags,
+                'span':self.span, "hash":self.text_hash }
 
 
 def register_cmd(func):
@@ -260,6 +268,9 @@ def stringify_records(records:list, options:dict=None, ansi_colours=False):
                 if t[0] in tags: tags[t[0]] += 1
                 else: tags[t[0]] = 1
         out = json.dumps(tags, indent=2)
+    elif options and options["md"]:
+        out = "".join([r.md() for r in records])
+        out = out.strip()
     else:
         out = "".join([str(r) for r in records])
         out = out.strip()
@@ -272,8 +283,8 @@ def stringify_records(records:list, options:dict=None, ansi_colours=False):
                 out = re.sub(f"(?!{re.escape(col)})@"+tag+f"(?!{re.escape(end)})", col+"@"+tag+end, out)
         # TODO: the [tdb:\1] here feels like it could be done better. Also, config colour for tdb header?
         out = re_iso_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)
-        out = re_hex_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)
-    
+        out = re_hex_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)        
+
     return out
 
 
@@ -339,7 +350,9 @@ def filter_records(records : list, options : list):
         
         filtered = [r for r in filtered if any([date_compare(r.date, d) for d in dates])]
     
-    out = [] 
+    md = options["md"].lower() if options["md"] else None
+    re_md = re.compile("(#{1,6}\s+.+)")
+    out = []
     for record in filtered:
         low_text = record.text.lower()
         flat_tags = [x[0] for x in record.tags]
@@ -350,7 +363,15 @@ def filter_records(records : list, options : list):
         if not skip and otags: skip = not any([t in flat_tags for t in otags])
         if not skip and atags: skip = not all([t in flat_tags for t in atags])
         if not skip and ntags: skip = any([t in flat_tags for t in ntags])
+        if md:
+            md_text = re_md.split(record.text)
+            if not md_text[0].startswith("#"): md_text = md_text[1:]
+            md_text = zip(md_text[::2], md_text[1::2])
+            md_text = [f"{t[0]}\n{t[1]}" for t in md_text if md in t[0].lower()]
+            record.md_text = "".join(md_text)
+            if not record.md_text: skip = True
         if not skip: out.append(record)
+
 
     return out
 
