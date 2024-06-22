@@ -80,7 +80,7 @@ class Record(object):
     def asdict(self):
         return {'text': self.text, 'time': self.time,
                 'date': self.date.isoformat(" "), 'tags': self.tags,
-                'span':self.span, "hash":self.text_hash }
+                'span':self.span, "ending":self.ending }
 
 
 def register_cmd(func):
@@ -314,6 +314,8 @@ def filter_records(records : list, options : list):
     acontains = options["acontains"] if options else []
     ocontains = options["ocontains"] if options else []
     ncontains = options["ncontains"] if options else []
+    md = options["md"].lower() if options else ""
+    re_md = re.compile("(#{1,6}\s+.+)")
 
     if span:
         if all(map(lambda x: isinstance(x, int), span)):
@@ -350,8 +352,6 @@ def filter_records(records : list, options : list):
         
         filtered = [r for r in filtered if any([date_compare(r.date, d) for d in dates])]
     
-    md = options["md"].lower() if options["md"] else None
-    re_md = re.compile("(#{1,6}\s+.+)")
     out = []
     for record in filtered:
         low_text = record.text.lower()
@@ -371,7 +371,6 @@ def filter_records(records : list, options : list):
             record.md_text = "".join(md_text)
             if not record.md_text: skip = True
         if not skip: out.append(record)
-
 
     return out
 

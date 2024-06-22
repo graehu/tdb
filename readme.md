@@ -16,12 +16,13 @@ open:           Open tdbs files: tdb open ['archive', 'config', 'db']
 listen:         Starts a server listening on passed port.
 ----------------------------------------------------------------
 Options:
-span:           The records to select, example: span:7d is the last 7 days.
+span:           The records to select, e.g: span:7d is the last 7 days.
 as:             The format to see the records in. Only valid for show currently. [html, json, list, tags]
-@{tag}:         This tag or any others must be included, example: @notes @school, records must have either.
+md:             Show text inside the named markdown section.
+@{tag}:         This tag or any others must be included, i.e: @notes @school, records must have either.
 +@{tag}:        This tag and any others must be included. i.e. +@notes +@school, records must have both.
 -@{tag}:        This tag must not be included. i.e. -@notes @school, records for school, no notes.
-{text}:         This text is optional.
+{text}:         This text or any listed text must be included.
 +{text}:        This text must be included.
 -{text}:        This text must not be included.
 
