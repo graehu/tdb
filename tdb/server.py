@@ -133,8 +133,8 @@ class TdbServer(SimpleHTTPRequestHandler):
                     records = tdb.records.split_db_records(options)
                     if len(records) == 1:
                         cpy = tdb.records.Record(**records[0].asdict())
-                        cpy.text = parsed["text"] # TODO: The need to always add \n is annoying. text should be property a property and add it.
-                        if not cpy.text.endswith("\n"): cpy.text += "\n" 
+                        cpy.text = parsed["text"] 
+                        cpy.text_hash = hash(cpy.text)
                         tdb.records.modify_db_records(records, [cpy])
                         tdb.db.serialise()
                         response["ok"] = True
