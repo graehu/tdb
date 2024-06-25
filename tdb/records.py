@@ -74,7 +74,7 @@ class Record(object):
         return f"[tdb:{hex(self.time)}] {self.text}"+self.ending
 
     def md(self):
-        return f"[tdb:{self.iso_str()}] {self.md_text}"+self.ending
+        return f"[tdb:{self.iso_str()}] {self.md_text}"
 
     
     def asdict(self):
@@ -367,7 +367,7 @@ def filter_records(records : list, options : list):
             md_text = re_md.split(record.text)
             if not md_text[0].startswith("#"): md_text = md_text[1:]
             md_text = zip(md_text[::2], md_text[1::2])
-            md_text = [f"{t[0]}\n{t[1]}" for t in md_text if md in t[0].lower()]
+            md_text = [f"{t[0]}{t[1]}" for t in md_text if md in t[0].lower()]
             record.md_text = "".join(md_text)
             if not record.md_text: skip = True
         if not skip: out.append(record)

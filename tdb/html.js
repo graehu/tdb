@@ -47,6 +47,15 @@ document.addEventListener("DOMContentLoaded", function () {
 			{
 				const url = window.origin + "/api/get.records"+"?opts="+encodeURI(input.value + " as:html_entries");
 				insertUrlParam("opts", encodeURI(input.value));
+				var hideedit = false;
+				for (const s of input.value.split(" "))
+				{
+					if(s.startsWith("md:"))
+					{
+						hideedit = true;
+						break;
+					}	
+				}
 				httpGet(url, function (response) {
 					response = JSON.parse(response);
 					if (response["ok"]) {
@@ -54,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
 						container.innerHTML = response["records"];
 						for(var i = 0; i < container.children.length; i++)
 						{
-							if (container.children[i].className == "entry" && allowedit)
+							if (container.children[i].className == "entry" && allowedit && !hideedit)
 							{
 								var child = container.children[i];
 								var edit = document.createElement("button");

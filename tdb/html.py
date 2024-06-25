@@ -101,7 +101,7 @@ def build_html(entries, server=False):
 def build_html_entries(entries):
     entries_str = ""
     for in_entry in entries:
-        text = in_entry.text
+        text = in_entry.text if not in_entry.md_text else in_entry.md_text
         if "markdown" in sys.modules:
             text = preprocess_mermaid(text)
             text = markdown.markdown(text, extensions=["extra", "codehilite"])

@@ -24,7 +24,7 @@ class TdbServer(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         query_list = []
-        allowedit = self.client_address[0] == "127.0.0.1"
+        allowedit = self.client_address[0] == "127.0.0.1" and opt_overrides["md"] == ""
         
         # split the query out if need be
         if "?" in self.path:
@@ -111,7 +111,7 @@ class TdbServer(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         response = {"ok": False}
-        allowedit = self.client_address[0] == "127.0.0.1"
+        allowedit = self.client_address[0] == "127.0.0.1" and opt_overrides["md"] == ""
         code = 200
         headers = {}
         headers["Content-Type"] = "text/json"
