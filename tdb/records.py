@@ -42,14 +42,13 @@ def convert_headers(text):
 
 class Record(object):
     text = ""
-    ending = "\n"
     text_hash = 0
     time = 0
     date = None
     tags = []
     span = (0,0)
     md_text = ""
-    def __init__(self, text, time, ending, date, tags, span):
+    def __init__(self, text, time, date, tags, span):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -59,28 +58,30 @@ class Record(object):
         self.span = span
         self.time = time
         self.text_hash = hash(text)
-        self.ending = ending
         self.md_text = text
+
+    def _end(text):
+        return text + "\n" if text[-1] != "\n" else text
 
     def __str__(self):
         if _force_hex:
             return self.entry()
         else:
-            return f"[tdb:{self.iso_str()}] {self.text}"+self.ending
+            return Record._end(f"[tdb:{self.iso_str()}] {self.text}")
 
     def iso_str(self): return self.date.isoformat(' ')
 
     def entry(self):
-        return f"[tdb:{hex(self.time)}] {self.text}"+self.ending
+        return Record._end(f"[tdb:{hex(self.time)}] {self.text}")
 
     def md(self):
-        return f"[tdb:{self.iso_str()}] {self.md_text}"
+        return Record._end(f"[tdb:{self.iso_str()}] {self.md_text}")
 
     
     def asdict(self):
         return {'text': self.text, 'time': self.time,
                 'date': self.date.isoformat(" "), 'tags': self.tags,
-                'span':self.span, "ending":self.ending }
+                'span':self.span }
 
 
 def register_cmd(func):
@@ -414,8 +415,7 @@ def split_records(text: str):
             section = text[x:y]
             tags = tdb.tags.find_tags(section.lower())
             tdb.tags.register(tags)
-            last["text"] = section.rstrip()
-            last["ending"] = "\n\n" if last["text"].count("\n") > 1 else "\n"
+            last["text"] = section
             last["tags"] = tags
             last["span"] = (x ,y)
             records.append(last)
