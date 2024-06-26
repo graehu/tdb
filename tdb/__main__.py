@@ -60,16 +60,28 @@ def edit(options, can_exit=True):
         edit_ext = tdb.config.get('edit_ext')
         edit_ext = edit_ext if edit_ext else ".txt"
         records = tdb.records.split_db_records(options)
-        content = "".join([str(r) for r in records])
+        md_options = tdb.cli.parse_options("simple")
+        md_options["md"] = options["md"]
+        content = "".join([r.md() for r in records])
         update_called = False
+        # TODO: this previous isn't needed now.
         def update_db(previous, text):
             nonlocal content
             nonlocal update_called
+            nonlocal records
             update_called = True
             if not text or text[-1] != "\n": text += "\n"
-            old_records = tdb.records.split_records(previous)
+            
             new_records = tdb.records.split_records(text)
-            adds, mods, dels = tdb.records.modify_db_records(old_records, new_records)
+            if md_options["md"]:
+                for r1 in records:
+                    for r2 in new_records:
+                        if r1.is_samedate(r2):
+                            r2.text = r1.text.replace(r1.md_text, r2.text)
+                            r2.text_hash = hash(r2.text)
+                            break
+                
+            adds, mods, dels = tdb.records.modify_db_records(records, new_records)
             if adds or mods or dels: print("".ljust(32, "="))
             if adds: print(f"Inserted {adds} record{'s' if adds > 1 else ''}.")
             if mods: print(f"Modified {mods} record{'s' if mods > 1 else ''}.")
@@ -77,7 +89,8 @@ def edit(options, can_exit=True):
 
             tdb.db.serialise()
             dates = [r.date for r in tdb.records.split_records(text)]
-            text = "".join([str(r) for r in tdb.records.split_db_records() if r.date in dates])
+            records = [r for r in tdb.records.split_db_records(md_options) if r.date in dates]
+            text = "".join([r.md() for r in records])
             content = text
             return text
 

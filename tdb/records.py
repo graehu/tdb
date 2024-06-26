@@ -62,6 +62,9 @@ class Record(object):
 
     def _end(text):
         return text + "\n" if text[-1] != "\n" else text
+    
+    def is_samedate(self, record):
+        return record.date == self.date
 
     def __str__(self):
         if _force_hex:
@@ -75,7 +78,10 @@ class Record(object):
         return Record._end(f"[tdb:{hex(self.time)}] {self.text}")
 
     def md(self):
-        return Record._end(f"[tdb:{self.iso_str()}] {self.md_text}")
+        if self.md_text:
+            return Record._end(f"[tdb:{self.iso_str()}] {self.md_text}")
+        else:
+            return str(self)
 
     
     def asdict(self):
