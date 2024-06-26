@@ -47,7 +47,7 @@ class Record(object):
     date = None
     tags = []
     span = (0,0)
-    md_text = ""
+    md_text = []
     def __init__(self, text, time, date, tags, span):
         self.text = text
         if isinstance(date, str):
@@ -58,7 +58,7 @@ class Record(object):
         self.span = span
         self.time = time
         self.text_hash = hash(text)
-        self.md_text = text
+        # self.md_text = text
 
     def _end(text):
         return text + "\n" if text[-1] != "\n" else text
@@ -79,7 +79,7 @@ class Record(object):
 
     def md(self):
         if self.md_text:
-            return Record._end(f"[tdb:{self.iso_str()}] {self.md_text}")
+            return Record._end(f"[tdb:{self.iso_str()}] {''.join(self.md_text)}")
         else:
             return str(self)
 
@@ -375,7 +375,7 @@ def filter_records(records : list, options : list):
             if not md_text[0].startswith("#"): md_text = md_text[1:]
             md_text = zip(md_text[::2], md_text[1::2])
             md_text = [f"{t[0]}{t[1]}" for t in md_text if md in t[0].lower()]
-            record.md_text = "".join(md_text)
+            record.md_text = md_text
             if not record.md_text: skip = True
         if not skip: out.append(record)
 

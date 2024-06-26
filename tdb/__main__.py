@@ -73,11 +73,15 @@ def edit(options, can_exit=True):
             if not text or text[-1] != "\n": text += "\n"
             
             new_records = tdb.records.split_records(text)
+            
             if md_options["md"]:
+                new_records = tdb.records.filter_records(new_records, md_options)
                 for r1 in records:
                     for r2 in new_records:
                         if r1.is_samedate(r2):
-                            r2.text = r1.text.replace(r1.md_text, r2.text)
+                            mds = zip(r1.md_text, r2.md_text)
+                            r2.text = r1.text
+                            for m1, m2 in mds: r2.text = r2.text.replace(m1, m2)
                             r2.text_hash = hash(r2.text)
                             break
                 
