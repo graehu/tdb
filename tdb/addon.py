@@ -24,9 +24,11 @@ def addon_tag(context, text, args):
             if split_args[0] == "rm": text = remove_tag_cmd(text, split_args[1:])
             elif split_args[0] == "add": text = add_tag_cmd(text, split_args[1:])
             elif split_args[0] == "export": text = export_cmd(text, split_args[1:])
-        if split_args[0] == "random":
-            line = f"\n@{get_addon_name()}: random {random.random()}"
-            text = tdb.tags.replace_tag(text, (get_addon_name(), args), line)
+            if  context != "tui" and split_args[0] == "eval": text = eval_cmd(text, args)
+        else:
+            if split_args[0] == "random":
+                line = f"\n@{get_addon_name()}: random {random.random()}"
+                text = tdb.tags.replace_tag(text, (get_addon_name(), args), line)
     else:
         text = tdb.tags.replace_tag(text, (get_addon_name(), args), "")
     return text
@@ -69,6 +71,30 @@ def remove_tag_cmd(text, args):
         r.text = r.text.rstrip() + "\n"
 
     return "".join([str(r) for r in records])
+
+def eval_cmd(text, args):
+    try:
+        args = args.replace("eval", "", 1)
+        out = eval(args)
+        lines = text.splitlines()
+        for line, num in zip(lines, range(0, len(lines))):
+            if  line.endswith(args):
+                break
+        
+        if num < len(lines)-1:
+            if lines[num+1] != f"eval: {out}":
+                lines = lines[:num+1]+[f"eval: {out}"]+lines[1+num:]
+        elif num == len(lines)-1:
+            lines += [f"eval: {out}"]
+        
+        text = "\n".join(lines)
+
+        pass
+    except Exception as e:
+        print(e)
+        pass
+    return text
+
 
 
 def export_cmd(text, args):
