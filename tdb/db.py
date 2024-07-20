@@ -85,6 +85,7 @@ def append_fileline(text, path):
     while True:
         try:
             with open(path, "a+") as db:
+                if text[-1] != '\n': text += '\n'
                 db.seek(0, os.SEEK_END)
                 db.seek(max(0, db.tell()-1)) # potential utf-8 issues
                 if db.read() != '\n' and text[0] != '\n':
