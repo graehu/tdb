@@ -308,10 +308,13 @@ def filter_records(records : list, options : list):
     filtered = records.copy()
 
     if ctags := tdb.config.get("tags"):
-        for tag in ctags:
-            tops = [*options["otags"], *options["atags"], *options["ntags"]]
-            if "exclude" in ctags[tag] and ctags[tag]["exclude"] and not tag in tops:
-                options["ntags"].append(tag)
+        tops = [*options["otags"], *options["atags"]]
+        if not "tdball" in tops:
+            for tag in ctags:
+                if "exclude" in ctags[tag] and ctags[tag]["exclude"] and not tag in tops:
+                    options["ntags"].append(tag)
+        else:
+            options["otags"].remove("tdball")
 
     dates = options["dates"] if options else []
     span = options["span"].copy() if options else []
