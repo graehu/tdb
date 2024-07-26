@@ -376,8 +376,19 @@ def filter_records(records : list, options : list):
         if md:
             md_text = re_md.split(record.text)
             if not md_text[0].startswith("#"): md_text = md_text[1:]
-            md_text = zip(md_text[::2], md_text[1::2])
-            md_text = [f"{t[0]}{t[1]}" for t in md_text if md in t[0].lower()]
+            depth = 0
+            md_filtered = []
+            for t1, t2 in zip(md_text[::2], md_text[1::2]):
+                if md in t1.lower():
+                    depth = t1.count("#")
+                    md_filtered.append(f"{t1}{t2}")
+                elif depth != 0 and depth < t1.count('#'):
+                    md_filtered.append(f"{t1}{t2}")
+                else:
+                    depth = 0
+
+            # md_text = [f"{t[0]}{t[1]}" for t in md_text if md in t[0].lower()]
+            md_text = md_filtered
             record.md_text = md_text
             if not record.md_text: skip = True
         if not skip: out.append(record)
