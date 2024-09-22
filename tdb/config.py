@@ -2,7 +2,7 @@ import shutil
 import pathlib
 import os
 
-_editors = ["notepad", "gedit -w", "code -w", "emacs -a \"\" -c", "subl -w"]
+_editors = ["notepad", "gedit -w", "code -w", "emacsclient -a \"\" -c", "subl -w"]
 for editor in _editors:
     editor = editor.split()[0]
     if shutil.which(editor):
