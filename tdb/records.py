@@ -263,6 +263,10 @@ def stringify_records(records:list, options:dict=None, ansi_colours=False):
     elif options and options["as"] == "list":
         def list_line(record):
             line = str(record).splitlines()[0]
+            line = line.split("]", maxsplit=1)
+            day = record.date.strftime('%a')
+            line[0] = line[0].split(".", maxsplit=1)[0]
+            line = line[0] + "] " +str(day)+":" + line[1]
             for t, _ in record.tags:
                 if not "@"+t in line: line += " @"+t 
             return line+"\n"
