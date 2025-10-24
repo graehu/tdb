@@ -74,6 +74,9 @@ def remove_tag_cmd(text, args):
 
 def eval_cmd(text, args):
     try:
+        # todo: I have math here so I can use it.
+        # ----: but I should allow modules be set in configs.
+        import math
         args = args.replace("eval", "", 1)
         out = eval(args)
         lines = text.splitlines()
