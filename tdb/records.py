@@ -111,7 +111,7 @@ def add_record(text, start_time = None):
     tdb.db.append_immediate(record)
     tdb.db.archive(record, False)
 
-    return True
+    return ns
 
 
 def deduplicate_records(in_records):

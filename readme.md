@@ -3,11 +3,12 @@
 A text based database with tagging.
 
 ```
-Usage: py -m tdb [add | edit | rm | show | tui | template | open | listen] [text | options]
+Usage: py -m tdb [add | edit | record | rm | show | tui | template | open | listen] [text | options]
 ----------------------------------------------------------------
 Commands:
 add:            Make a record when text is supplied. Otherwise, open an editor to write one.
 edit:           Open an editor with some view of the database, see options.
+record:         Make a record when text is supplied, immediately open it for edit.
 rm:             Move matching records to the archive.
 show:           Print records to the cmdline, see options below.
 tui:            Text ui, very similar to 'less' on linux.

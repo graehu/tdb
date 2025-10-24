@@ -135,11 +135,12 @@ def rm(options, can_exit=True):
 def main(override=""):
     if len(sys.argv) < 2 or "--help" in sys.argv or sys.argv[1] == "help":
         print("# tdb\n\nA text based database with tagging.\n\n```")
-        print("Usage: py -m tdb [add | edit | rm | show | tui | template | open | listen] [text | options]")
+        print("Usage: py -m tdb [add | edit | record | rm | show | tui | template | open | listen] [text | options]")
         print("".ljust(64,"-"))
         print("Commands:")
         print("add:".ljust(16)+"Make a record when text is supplied. Otherwise, open an editor to write one.")
         print("edit:".ljust(16)+"Open an editor with some view of the database, see options.")
+        print("record:".ljust(16)+"Make a record when text is supplied, immediately open it for edit.")
         print("rm:".ljust(16)+"Move matching records to the archive.")
         print("show:".ljust(16)+"Print records to the cmdline, see options below.")
         print("tui:".ljust(16)+"Text ui, very similar to 'less' on linux.")
@@ -161,6 +162,7 @@ def main(override=""):
     edit_ext = tdb.config.get('edit_ext')
     edit_ext = edit_ext if edit_ext else ".txt"
 
+
     if command == "add":
         text = tdb.cli.get_text()
         import_addons(printout=(text == ""))
@@ -171,7 +173,19 @@ def main(override=""):
         else:
             print("No text provided. Record not added.")
             sys.exit(1)
-
+    elif command == "record":
+        text = tdb.cli.get_text()
+        if text:
+            import datetime
+            ms = tdb.records.add_record(text, tdb.session._start_time)
+            out = datetime.datetime.fromtimestamp(ms/1E6)
+            override = tdb.cli.parse_options("")
+            override["dates"].append(out)
+            edit(override)
+        else:
+            print("No text provided. Record not added.")
+            sys.exit(1)
+            pass
     elif command == "show":
         tdb.records.print_db_records(options)
     
