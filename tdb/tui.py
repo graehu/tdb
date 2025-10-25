@@ -19,7 +19,8 @@ def parse_cmd(cmdline, text, context="tui"):
     return text
 
 def update_db(previous, text):
-    if not text or text[-1] != "\n": text += "\n"
+    # this was causing crashes, I dont guarentee endings anymore.
+    # if not text or text[-1] != "\n": text += "\n"
     old_records = tdb.records.split_records(previous)
     new_records = tdb.records.split_records(text)
     tdb.records.modify_db_records(old_records, new_records)
