@@ -4,6 +4,7 @@ import random
 import tdb.tags
 import tdb.records
 import tdb.html
+import re
 
 def get_addon_name(): return "tdb"
 
@@ -25,6 +26,7 @@ def addon_tag(context, text, args):
             elif split_args[0] == "add": text = add_tag_cmd(text, split_args[1:])
             elif split_args[0] == "export": text = export_cmd(text, split_args[1:])
             if  context != "tui" and split_args[0] == "eval": text = eval_cmd(text, args)
+            if  context != "tui" and split_args[0] == "mdrun": text = mdrun_cmd(text, args)
         else:
             if split_args[0] == "random":
                 line = f"\n@{get_addon_name()}: random {random.random()}"
@@ -74,9 +76,6 @@ def remove_tag_cmd(text, args):
 
 def eval_cmd(text, args):
     try:
-        # todo: I have math here so I can use it.
-        # ----: but I should allow modules be set in configs.
-        import math
         args = args.replace("eval", "", 1)
         out = eval(args)
         lines = text.splitlines()
@@ -98,7 +97,16 @@ def eval_cmd(text, args):
         pass
     return text
 
-
+# todo: make this handle more than python?
+def mdrun_cmd(text, args):
+    try:
+        pattern = re.compile("\`\`\`\s*python\s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
+        blocks = [block.strip() for block in pattern.findall(text)]
+        for block in blocks: exec(block)
+    except Exception as e:
+        print(e)
+        pass
+    return text
 
 def export_cmd(text, args):
     path : str = args[0]
