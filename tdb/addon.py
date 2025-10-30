@@ -26,7 +26,7 @@ def addon_tag(context, text, args):
             elif split_args[0] == "add": text = add_tag_cmd(text, split_args[1:])
             elif split_args[0] == "export": text = export_cmd(text, split_args[1:])
             if  context != "tui" and split_args[0] == "eval": text = eval_cmd(text, args)
-            if  context != "tui" and split_args[0] == "mdrun": text = mdrun_cmd(text, args)
+            if  context != "tui" and split_args[0] == "python": text = python_cmd(text, args)
         else:
             if split_args[0] == "random":
                 line = f"\n@{get_addon_name()}: random {random.random()}"
@@ -98,14 +98,25 @@ def eval_cmd(text, args):
     return text
 
 # todo: make this handle more than python?
-def mdrun_cmd(text, args):
-    try:
-        pattern = re.compile("\`\`\`\s*python\s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
-        blocks = [block.strip() for block in pattern.findall(text)]
-        for block in blocks: exec(block)
-    except Exception as e:
-        print(e)
-        pass
+def python_cmd(text, args):
+    import io
+    from contextlib import redirect_stdout
+    pattern = re.compile("\`\`\`\s*python\s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
+    blocks = [block.strip() for block in pattern.findall(text)]
+    for block in blocks:
+        text = text.replace(block, "MDPYTHON_REPLACEMENT_STRING")
+        block = "\n".join([b for b in block.splitlines() if not b.startswith("#tdb:")])
+        text = text.replace("MDPYTHON_REPLACEMENT_STRING", block)
+        output = ""
+        f = io.StringIO()
+        with redirect_stdout(f):
+            try: exec(block)
+            except Exception as e:
+                print(e)
+            output = f.getvalue()
+        if output:
+            output = "#tdb: "+"\n#tdb: ".join(output.splitlines())
+            text = text.replace(block, block+"\n"+output)
     return text
 
 def export_cmd(text, args):
