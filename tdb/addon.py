@@ -110,7 +110,7 @@ def python_cmd(text, args):
         output = ""
         f = io.StringIO()
         with redirect_stdout(f):
-            try: exec(block)
+            try: exec(block, {}, {})
             except Exception as e:
                 print(e)
             output = f.getvalue()
