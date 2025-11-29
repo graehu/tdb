@@ -1,10 +1,14 @@
+import os
+import re
 import shlex
 import json
 import random
+import subprocess
 import tdb.tags
 import tdb.records
 import tdb.html
-import re
+
+
 
 def get_addon_name(): return "tdb"
 
@@ -27,6 +31,7 @@ def addon_tag(context, text, args):
             elif split_args[0] == "export": text = export_cmd(text, split_args[1:])
             if  context != "tui" and split_args[0] == "eval": text = eval_cmd(text, args)
             if  context != "tui" and split_args[0] == "python": text = python_cmd(text, args)
+            if  context != "tui" and split_args[0] == "cpp": text = cpp_cmd(text, args)
         else:
             if split_args[0] == "random":
                 line = f"\n@{get_addon_name()}: random {random.random()}"
@@ -97,7 +102,6 @@ def eval_cmd(text, args):
         pass
     return text
 
-# todo: make this handle more than python?
 def python_cmd(text, args):
     import io
     from contextlib import redirect_stdout
@@ -117,6 +121,35 @@ def python_cmd(text, args):
         if output:
             output = "#tdb: "+"\n#tdb: ".join(output.splitlines())
             text = text.replace(block, block+"\n"+output)
+    return text
+
+# todo: make this not hacky.
+# ----: this shouldn't make the .cpps/.bin in the curdir.
+# ----: this shouldn't assume / use g++. yada yada
+def cpp_cmd(text, args):
+    pattern = re.compile("\`\`\`\s*c\+\+\s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
+    blocks = [block.strip() for block in pattern.findall(text)]
+    for block in blocks:
+        text = text.replace(block, "MDC++_REPLACEMENT_STRING")
+        block = "\n".join([b for b in block.splitlines() if not b.startswith("//tdb:")])
+        text = text.replace("MDC++_REPLACEMENT_STRING", block)
+        output = ""
+        with open("tdb_temp.cpp", 'w') as source: source.write(block)
+        try:
+            output = subprocess.run("g++ tdb_temp.cpp -o tdb_temp.bin && ./tdb_temp.bin", shell=True, text=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
+            output = output.stdout+output.stderr
+        except Exception as e: output = str(e)
+        
+        if output:
+            output = "//tdb: "+"\n//tdb: ".join(output.splitlines())
+            output = output.strip()
+            text = text.replace(block, block+"\n"+output)
+    try:
+        os.remove("tdb_temp.cpp")
+        os.remove("tdb_temp.bin")
+    except Exception as e: pass
     return text
 
 def export_cmd(text, args):
