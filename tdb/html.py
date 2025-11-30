@@ -5,9 +5,9 @@ import re
 try: import markdown
 except: pass
 
-_css_file = "/".join((tdb.config._tdb_dir, "style.css"))
-_mermaid_js_file = "/".join((tdb.config._tdb_dir, "mermaid.min.js"))
-_mermaid_css_file = "/".join((tdb.config._tdb_dir, "mermaid.css"))
+_css_file = "/".join((tdb.config.get_tdb_dir(), "style.css"))
+_mermaid_js_file = "/".join((tdb.config.get_tdb_dir(), "mermaid.min.js"))
+_mermaid_css_file = "/".join((tdb.config.get_tdb_dir(), "mermaid.css"))
 
 if not os.path.exists(_css_file): _css_file = "/".join((os.path.dirname(__file__), "style.css"))
 if not os.path.exists(_mermaid_js_file): _mermaid_js_file = None
