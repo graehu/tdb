@@ -7,6 +7,7 @@ import subprocess
 import tdb.tags
 import tdb.records
 import tdb.html
+import tdb.config
 
 
 
@@ -123,9 +124,7 @@ def python_cmd(text, args):
             text = text.replace(block, block+"\n"+output)
     return text
 
-# todo: make this not hacky.
-# ----: this shouldn't make the .cpps/.bin in the curdir.
-# ----: this shouldn't assume / use g++. yada yada
+
 def cpp_cmd(text, args):
     pattern = re.compile("\`\`\`\s*c\+\+\s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
     blocks = [block.strip() for block in pattern.findall(text)]
@@ -133,10 +132,12 @@ def cpp_cmd(text, args):
         text = text.replace(block, "MDC++_REPLACEMENT_STRING")
         block = "\n".join([b for b in block.splitlines() if not b.startswith("//tdb:")])
         text = text.replace("MDC++_REPLACEMENT_STRING", block)
+        compiler = tdb.config.get("cpp_compiler", "g++")
+        outdir = tdb.config.get_tdb_dir()
         output = ""
-        with open("tdb_temp.cpp", 'w') as source: source.write(block)
+        with open(f"{outdir}/tdb_temp.cpp", 'w') as source: source.write(block)
         try:
-            output = subprocess.run("g++ tdb_temp.cpp -o tdb_temp.bin && ./tdb_temp.bin", shell=True, text=True,
+            output = subprocess.run(f"{compiler} {outdir}/tdb_temp.cpp -o {outdir}/tdb_temp.bin && {outdir}/tdb_temp.bin", shell=True, text=True,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
             output = output.stdout+output.stderr
@@ -147,8 +148,8 @@ def cpp_cmd(text, args):
             output = output.strip()
             text = text.replace(block, block+"\n"+output)
     try:
-        os.remove("tdb_temp.cpp")
-        os.remove("tdb_temp.bin")
+        os.remove(f"{outdir}/tdb_temp.cpp")
+        os.remove(f"{outdir}/tdb_temp.bin")
     except Exception as e: pass
     return text
 
