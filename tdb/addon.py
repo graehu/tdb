@@ -137,15 +137,19 @@ def cpp_cmd(text, args):
         text = text.replace(block, "MDC++_REPLACEMENT_STRING")
         block = "\n".join([b for b in block.splitlines() if not b.startswith("//tdb:")])
         text = text.replace("MDC++_REPLACEMENT_STRING", block)
-        compiler = tdb.config.get("cpp_compiler", "g++")
         outdir = tdb.config.get_tdb_dir()
+        compile_cmd = tdb.config.get("cpp_compile_cmd", "g++ -o")
+        compile_cmd = f"{compile_cmd} {outdir}/tdb_temp.bin {outdir}/tdb_temp.cpp"
         output = ""
         with open(f"{outdir}/tdb_temp.cpp", 'w') as source: source.write(block)
         try:
-            output = subprocess.run(f"{compiler} {outdir}/tdb_temp.cpp -o {outdir}/tdb_temp.bin && {outdir}/tdb_temp.bin", shell=True, text=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE)
-            output = output.stdout+output.stderr
+            res = subprocess.run(compile_cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if res.returncode == 0:
+                res = subprocess.run(f"{outdir}/tdb_temp.bin", shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                output += res.stdout+res.stderr
+            else:
+                output += f"failed: '{compile_cmd}'\n"
+                output += res.stdout+res.stderr
         except Exception as e: output = str(e)
         
         if output:
