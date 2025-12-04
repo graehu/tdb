@@ -131,6 +131,8 @@ def python_cmd(text, args):
 
 
 def cpp_cmd(text, args):
+    try: split_args = " ".join(shlex.split(args)[1:])
+    except ValueError as e: split_args = ""
     pattern = re.compile("\`\`\`\s*c\+\+\s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
     blocks = [block.strip() for block in pattern.findall(text)]
     for block in blocks:
@@ -138,7 +140,7 @@ def cpp_cmd(text, args):
         block = "\n".join([b for b in block.splitlines() if not b.startswith("//tdb:")])
         text = text.replace("MDC++_REPLACEMENT_STRING", block)
         outdir = tdb.config.get_tdb_dir()
-        compile_cmd = tdb.config.get("cpp_compile_cmd", "g++ -o")
+        compile_cmd = split_args if split_args else tdb.config.get("cpp_compile_cmd", "g++ -o")
         compile_cmd = f"{compile_cmd} {outdir}/tdb_temp.bin {outdir}/tdb_temp.cpp"
         output = ""
         with open(f"{outdir}/tdb_temp.cpp", 'w') as source: source.write(block)
