@@ -34,6 +34,7 @@ def addon_tag(context, text, args):
             if  context != "tui" and split_args[0] == "eval": text = eval_cmd(text, args)
             if  context != "tui" and split_args[0] == "python": text = python_cmd(text, args)
             if  context != "tui" and split_args[0] == "cpp": text = cpp_cmd(text, args)
+            if  context != "tui" and split_args[0] == "code": text = code_cmd(text, args)
         else:
             if split_args[0] == "random":
                 line = f"\n@{get_addon_name()}: random {random.random()}"
@@ -161,6 +162,43 @@ def cpp_cmd(text, args):
     try:
         os.remove(f"{outdir}/tdb_temp.cpp")
         os.remove(f"{outdir}/tdb_temp.bin")
+    except Exception as e: pass
+    return text
+
+
+def code_cmd(text, args):
+    try:
+        cmd = shlex.split(args)[1:]
+        code = re.escape(cmd[0])
+        cmd = " ".join(cmd[1:])
+    except ValueError as e:
+        return
+    outdir = tdb.config.get_tdb_dir()
+    cmd = cmd.format_map({"in_file": f"{outdir}/tdb_temp"})
+    outfile = re.search(re.escape(f"{outdir}/tdb_temp")+"[\.A-Za-z]*", cmd).group(0)
+    pattern = re.compile(f"\`\`\`\s*{code}s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
+    blocks = [block.strip() for block in pattern.findall(text)]
+    for block in blocks:
+        text = text.replace(block, "MDCODE_REPLACEMENT_STRING")
+        block = "\n".join([b for b in block.splitlines() if not b.startswith("#tdb:")])
+        text = text.replace("MDCODE_REPLACEMENT_STRING", block)
+        output = ""
+        with open(outfile, 'w') as source: source.write(block)
+        try:
+            res = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if res.returncode == 0:
+                output += res.stdout+res.stderr
+            else:
+                output += f"failed: '{cmd}'\n"
+                output += res.stdout+res.stderr
+        except Exception as e: output = str(e)
+        
+        if output:
+            output = "#tdb: "+"\n#tdb: ".join(output.splitlines())
+            output = output.strip()
+            text = text.replace(block, block+"\n"+output)
+    try:
+        os.remove(outfile)
     except Exception as e: pass
     return text
 
