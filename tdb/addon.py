@@ -171,10 +171,11 @@ def code_cmd(text, args):
         cmd = shlex.split(args)[1:]
         code = re.escape(cmd[0])
         cmd = " ".join(cmd[1:])
-        outdir = tdb.config.get_tdb_dir()
-        cmd = cmd.format_map({"in_file": f"{outdir}/tdb_temp"})
-        outfile = re.search(re.escape(f"{outdir}/tdb_temp")+"[\.A-Za-z]*", cmd).group(0)
+        cmd = cmd.format_map({"in_file": "tdb_code"})
+        outfile = re.search(re.escape(f"tdb_code")+"[\.A-Za-z]*", cmd).group(0)
     except Exception as e: return text
+    previous = os.path.abspath(os.path.curdir)
+    os.chdir(tdb.config.get_tdb_dir())
     pattern = re.compile(f"\`\`\`\s*{code}s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
     blocks = [block.strip() for block in pattern.findall(text)]
     for block in blocks:
@@ -199,6 +200,7 @@ def code_cmd(text, args):
     try:
         os.remove(outfile)
     except Exception as e: pass
+    os.chdir(previous)
     return text
 
 
