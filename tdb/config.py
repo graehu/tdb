@@ -38,6 +38,8 @@ edit_ext = ".md"
 # options: {_editors}
 editor = "{_editor}" # command for editor
 addons = ["{_addon_file}"]
+cpp_cmd = "g++ -o out.bin {{code}}.cpp && ./out.bin"
+python_cmd = "python3 {{code}}.py"
 """+"""
 [tags]
 bug = {colour = "red"}

@@ -32,8 +32,6 @@ def addon_tag(context, text, args):
             elif split_args[0] == "add": text = add_tag_cmd(text, split_args[1:])
             elif split_args[0] == "export": text = export_cmd(text, split_args[1:])
             if  context != "tui" and split_args[0] == "eval": text = eval_cmd(text, args)
-            if  context != "tui" and split_args[0] == "python": text = python_cmd(text, args)
-            if  context != "tui" and split_args[0] == "cpp": text = cpp_cmd(text, args)
             if  context != "tui" and split_args[0] == "code": text = code_cmd(text, args)
         else:
             if split_args[0] == "random":
@@ -109,74 +107,17 @@ def eval_cmd(text, args):
     return text
 
 
-def python_cmd(text, args):
-    import io
-    from contextlib import redirect_stdout
-    pattern = re.compile("\`\`\`\s*python\s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
-    blocks = [block.strip() for block in pattern.findall(text)]
-    for block in blocks:
-        text = text.replace(block, "MDPYTHON_REPLACEMENT_STRING")
-        block = "\n".join([b for b in block.splitlines() if not b.startswith("#tdb:")])
-        text = text.replace("MDPYTHON_REPLACEMENT_STRING", block)
-        output = ""
-        f = io.StringIO()
-        with redirect_stdout(f):
-            try: exec(block, {}, {})
-            except Exception as e:
-                print(e)
-            output = f.getvalue()
-        if output:
-            output = "#tdb: "+"\n#tdb: ".join(output.splitlines())
-            text = text.replace(block, block+"\n"+output)
-    return text
-
-
-def cpp_cmd(text, args):
-    try: split_args = " ".join(shlex.split(args)[1:])
-    except ValueError as e: split_args = ""
-    pattern = re.compile("\`\`\`\s*c\+\+\s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
-    blocks = [block.strip() for block in pattern.findall(text)]
-    for block in blocks:
-        text = text.replace(block, "MDC++_REPLACEMENT_STRING")
-        block = "\n".join([b for b in block.splitlines() if not b.startswith("//tdb:")])
-        text = text.replace("MDC++_REPLACEMENT_STRING", block)
-        outdir = tdb.config.get_tdb_dir()
-        compile_cmd = split_args if split_args else tdb.config.get("cpp_compile_cmd", "g++ -o")
-        compile_cmd = f"{compile_cmd} {outdir}/tdb_temp.bin {outdir}/tdb_temp.cpp"
-        output = ""
-        with open(f"{outdir}/tdb_temp.cpp", 'w') as source: source.write(block)
-        try:
-            res = subprocess.run(compile_cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if res.returncode == 0:
-                res = subprocess.run(f"{outdir}/tdb_temp.bin", shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                output += res.stdout+res.stderr
-            else:
-                output += f"failed: '{compile_cmd}'\n"
-                output += res.stdout+res.stderr
-        except Exception as e: output = str(e)
-        
-        if output:
-            output = "//tdb: "+"\n//tdb: ".join(output.splitlines())
-            output = output.strip()
-            text = text.replace(block, block+"\n"+output)
-    try:
-        os.remove(f"{outdir}/tdb_temp.cpp")
-        os.remove(f"{outdir}/tdb_temp.bin")
-    except Exception as e: pass
-    return text
-
-
 def code_cmd(text, args):
     try:
         cmd = shlex.split(args)[1:]
-        code = re.escape(cmd[0])
-        cmd = " ".join(cmd[1:])
-        cmd = cmd.format_map({"in_file": "tdb_code"})
+        codeblock = re.escape(cmd[0])
+        cmd = " ".join(cmd[1:]) if len(cmd[1:]) > 0 else tdb.config.get(f"{cmd[0]}_cmd", "echo no command given")
+        cmd = cmd.format_map({"code": "tdb_code"})
         outfile = re.search(re.escape(f"tdb_code")+"[\.A-Za-z]*", cmd).group(0)
     except Exception as e: return text
     previous = os.path.abspath(os.path.curdir)
     os.chdir(tdb.config.get_tdb_dir())
-    pattern = re.compile(f"\`\`\`\s*{code}s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
+    pattern = re.compile(f"\`\`\`\s*{codeblock}s*(.*?)\s\`\`\`", re.DOTALL | re.IGNORECASE)
     blocks = [block.strip() for block in pattern.findall(text)]
     for block in blocks:
         text = text.replace(block, "MDCODE_REPLACEMENT_STRING")
@@ -197,8 +138,8 @@ def code_cmd(text, args):
             output = "#tdb: "+"\n#tdb: ".join(output.splitlines())
             output = output.strip()
             text = text.replace(block, block+"\n"+output)
-    try:
-        os.remove(outfile)
+    
+    try: os.remove(outfile)
     except Exception as e: pass
     os.chdir(previous)
     return text
