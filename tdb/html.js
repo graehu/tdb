@@ -61,6 +61,16 @@ document.addEventListener("DOMContentLoaded", function () {
 		    if (response["ok"]) {
 			const before_scroll = window.scrollY;
 			container.innerHTML = response["records"];
+			
+			if(container.children.length > 3)
+			{
+			    container.style.columnCount = 3;
+			}
+			else
+			{
+			    container.style.columnCount = container.children.length;
+			}
+			
 			for(var i = 0; i < container.children.length; i++)
 			{
 			    if (container.children[i].children[0].className == "entry" && allowedit && !hideedit)
