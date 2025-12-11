@@ -63,9 +63,9 @@ document.addEventListener("DOMContentLoaded", function () {
 			container.innerHTML = response["records"];
 			for(var i = 0; i < container.children.length; i++)
 			{
-			    if (container.children[i].className == "entry" && allowedit && !hideedit)
+			    if (container.children[i].children[0].className == "entry" && allowedit && !hideedit)
 			    {
-				var child = container.children[i];
+				var child = container.children[i].children[0];
 				var edit = document.createElement("button");
 				var remove = document.createElement("button");
 				edit.style = " border: 0; background: none; box-shadow: none; border-radius: 0px;";
@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function () {
 						    event.target.onclick = save_func;
 						    content.innerHTML = "";
 						    var pre = document.createElement("pre");
-						    pre.style = "background: #eee;"
+						    pre.className = "entry_edit";
 						    content.appendChild(pre);
 						    const [first, ...rest] = response["records"].split("] ");
 						    pre.textContent = rest.join("] ");

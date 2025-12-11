@@ -42,6 +42,7 @@ body = """<!DOCTYPE html>
 """
 
 entry = """
+    <div class="entry_spacer">
     <div class="entry">
         <div class="date">
 {date}
@@ -50,7 +51,7 @@ entry = """
 {text}
         </div>
     </div>
-    <div class="entry_spacer"></div>
+    </div>
 """
 
 def preprocess_mermaid(text):
