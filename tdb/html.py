@@ -44,11 +44,11 @@ body = """<!DOCTYPE html>
 entry = """
     <div class="entry_spacer">
     <div class="entry">
-        <div class="date">
-{date}
-        </div>
         <div class="content">
 {text}
+        </div>
+        <div class="date">
+{date}
         </div>
     </div>
     </div>
