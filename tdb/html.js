@@ -78,8 +78,8 @@ document.addEventListener("DOMContentLoaded", function () {
 				var child = container.children[i].children[0];
 				var edit = document.createElement("button");
 				var remove = document.createElement("button");
-				edit.style = " border: 0; background: none; box-shadow: none; border-radius: 0px;";
-				remove.style = " border: 0; background: none; box-shadow: none; border-radius: 0px;";
+				edit.style = " border: 0; background: none; box-shadow: none; border-radius: 0px; float: right; filter: grayscale(50%);";
+				remove.style = " border: 0; background: none; box-shadow: none; border-radius: 0px; float: right; filter: grayscale(50%);";
 				edit.textContent = "✏️";
 				remove.textContent = "🗑️";
 				const save_func = function (event)
@@ -145,8 +145,8 @@ document.addEventListener("DOMContentLoaded", function () {
 				edit.remove_button = remove;
 				remove.onclick = remove_func;
 				remove.edit_button = edit;
-				child.appendChild(edit);
-				child.appendChild(remove);
+				child.insertBefore(remove, child.children[0]);
+				child.insertBefore(edit, child.children[0]);
 			    }
 			}
 			if (typeof mermaid !== 'undefined') { mermaid.run(); }
