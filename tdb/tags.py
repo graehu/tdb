@@ -61,6 +61,7 @@ def find_tags(text: str):
 
     return tags
 
+#todo: this doesn't work with tag lines.
 def replace_tag(text: str, tag, repl):
     #edge case, text can't start with @
     if tag[1]:

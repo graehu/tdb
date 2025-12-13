@@ -1,4 +1,5 @@
 import tdb.config
+import tdb.tags
 import sys
 import os
 import re
@@ -103,6 +104,11 @@ def build_html_entries(entries):
     entries_str = ""
     for in_entry in entries:
         text = in_entry.text if not in_entry.md_text else in_entry.md_text
+        # note: this is really inefficient :)
+        for tag in tdb.tags._config:
+            colour = tdb.tags.get_colour(tag)
+            text = tdb.tags.replace_tag(text, (tag,""), f"<div style='font-style: bold; color: {colour};'>@{tag}</div>")
+            
         if "markdown" in sys.modules:
             text = preprocess_mermaid(text)
             text = markdown.markdown(text, extensions=["extra", "codehilite"])
