@@ -21,7 +21,7 @@ ANSICodes = {
     "green" : ["\033[0;32m", (3, _init_colour(300, 1000, 300), -1)],
     "brown" : ["\033[0;33m", (4, _init_colour(688, 395, 500), -1)],
     "blue" : ["\033[0;34m", (5, _init_colour(300, 300, 1000), -1)],
-    "purple" : ["\033[0;35m", (6, _init_colour(1000, 300,1000), -1)],
+    "purple" : ["\033[0;35m", (6, _init_colour(1000, 300, 1000), -1)],
     "cyan" : ["\033[0;36m", (7, _init_colour(300, 1000, 1000), -1)],
     "light_gray" : ["\033[0;37m", (8, _init_colour(800, 800, 800), -1)],
     "dark_gray" : ["\033[1;30m", (9, _init_colour(600, 600, 600), -1)],
@@ -44,6 +44,17 @@ ANSICodes = {
     "end" : ["\033[0m", None],
 }
 
+
+def _get_id_rgb(id : int):
+    for col in _init_colour.cols:
+        if _init_colour.cols[col][0] == id:
+            return _init_colour.cols[col][1:]
+
+
+def _get_colour_rgb(name : str):
+    id = ANSICodes[name][1][1]
+    return _get_id_rgb(id)
+        
 
 def enable_ansi():
     kernel32 = ctypes.windll.kernel32

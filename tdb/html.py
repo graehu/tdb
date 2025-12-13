@@ -1,5 +1,6 @@
 import tdb.config
 import tdb.tags
+import tdb.cli
 import sys
 import os
 import re
@@ -107,6 +108,9 @@ def build_html_entries(entries):
         # note: this is really inefficient :)
         for tag in tdb.tags._config:
             colour = tdb.tags.get_colour(tag)
+            colour = tdb.cli._get_colour_rgb(colour)
+            colour = [int((x/1000)*255) for x in colour]
+            colour = '#%02x%02x%02x' % (colour[0], colour[1], colour[2])
             text = tdb.tags.replace_tag(text, (tag,""), f"<div style='font-style: bold; color: {colour};'>@{tag}</div>")
             
         if "markdown" in sys.modules:
