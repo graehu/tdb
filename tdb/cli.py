@@ -51,7 +51,7 @@ def _get_id_rgb(id : int):
             return _init_colour.cols[col][1:]
 
 
-def _get_colour_rgb(name : str):
+def get_colour_rgb(name : str):
     id = ANSICodes[name][1][1]
     return _get_id_rgb(id)
         

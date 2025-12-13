@@ -30,6 +30,11 @@ body {
     float: right;
 }
 
+.tag {
+    font-style: bold;
+    display: inline;
+}
+
 .input {
   width: 100%;
   padding: 0.5rem;
@@ -111,6 +116,10 @@ hr {
 .entry_edit {
     background: #2a2a2a;
     outline: none;
+    width: 100%;
+    width: -moz-available;          /* For Mozzila */
+    width: -webkit-fill-available;  /* For Chrome */
+    width: stretch;                 /* Unprefixed */
 }
 
 .codehilite .hll { background-color: #49483e }

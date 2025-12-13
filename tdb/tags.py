@@ -32,7 +32,6 @@ def _safe_re_search(string, position, pattern) -> int:
     match = pattern.search(string, position)
     return match.span()[0] if match else -1
 
-
 def find_tags(text: str):
     #edge case, text can't start with @
     re_end = re.compile(r'([\r\n])')

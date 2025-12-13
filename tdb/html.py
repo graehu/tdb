@@ -108,11 +108,12 @@ def build_html_entries(entries):
         # note: this is really inefficient :)
         for tag in tdb.tags._config:
             colour = tdb.tags.get_colour(tag)
-            colour = tdb.cli._get_colour_rgb(colour)
+            colour = tdb.cli.get_colour_rgb(colour)
             colour = [int((x/1000)*255) for x in colour]
             colour = '#%02x%02x%02x' % (colour[0], colour[1], colour[2])
-            text = tdb.tags.replace_tag(text, (tag,""), f"<div style='font-style: bold; color: {colour};'>@{tag}</div>")
-            
+            colour = f"\n<div class='tag' style='color: {colour};'>@{tag}</div>"
+            text = tdb.tags.replace_tag(text, (tag,""), colour)
+
         if "markdown" in sys.modules:
             text = preprocess_mermaid(text)
             text = markdown.markdown(text, extensions=["extra", "codehilite"])
