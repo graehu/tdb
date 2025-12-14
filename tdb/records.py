@@ -48,6 +48,7 @@ class Record(object):
     tags = []
     span = (0,0)
     md_text = []
+    score = 0.0
     def __init__(self, text, time, date, tags, span):
         self.text = text
         if isinstance(date, str):
@@ -58,6 +59,7 @@ class Record(object):
         self.span = span
         self.time = time
         self.text_hash = hash(text)
+        self.score = 0.0
         # self.md_text = text
 
     def _end(text):
@@ -87,7 +89,7 @@ class Record(object):
     def asdict(self):
         return {'text': self.text, 'time': self.time,
                 'date': self.date.isoformat(" "), 'tags': self.tags,
-                'span':self.span }
+                'span': self.span, 'score': self.score }
 
 
 def register_cmd(func):
@@ -251,6 +253,8 @@ def stringify_db_records(options:dict=None, ansi_colours=False):
 
 def stringify_records(records:list, options:dict=None, ansi_colours=False):
     out = ""
+    if options and options["rake"]:
+        records = find_similar(options["rake"], records)
     if options and options["as"] == "json":
         res = [r.asdict() for r in records]
         out = json.dumps(res, indent=2)
@@ -279,6 +283,7 @@ def stringify_records(records:list, options:dict=None, ansi_colours=False):
                 if t[0] in tags: tags[t[0]] += 1
                 else: tags[t[0]] = 1
         out = json.dumps(tags, indent=2)
+
     elif options and options["md"]:
         out = "".join([r.md() for r in records])
         out = out.strip()
@@ -294,7 +299,7 @@ def stringify_records(records:list, options:dict=None, ansi_colours=False):
                 out = re.sub(f"(?!{re.escape(col)})@"+tag+f"(?!{re.escape(end)})", col+"@"+tag+end, out)
         # TODO: the [tdb:\1] here feels like it could be done better. Also, config colour for tdb header?
         out = re_iso_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)
-        out = re_hex_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)        
+        out = re_hex_record.sub(tdb.cli.ANSICodes["light_white"][0]+r"[tdb:\1] "+tdb.cli.ANSICodes["end"][0], out)
 
     return out
 
@@ -469,20 +474,17 @@ def split_records(text: str):
     return records
 
 
-def find_similar(text):
+def find_similar(text, records):
     kw_ext = tdb.rake.Rake()
     text_kw = kw_ext.run(text)
-
-    records = split_db_records()
     results = []
     for record in records:
-        record_kw = kw_ext.run(record["text"])
+        record_kw = kw_ext.run(record.text)
         for k1, v1 in record_kw:
             for k2, v2 in text_kw:
                 if tdb.rake.similarity_score(k1, k2) > 0.8:
-                    record["score"] += (v1+v2)*0.5
+                    record.score += (v1+v2)*0.5
 
-        if record["score"] > 0:
-            results.append(record)
-
-    print(json.dumps(results, indent=2))
+        if record.score > 0: results.append(record)
+    results = sorted(results, key=lambda x: x.score, reverse=True)
+    return results
