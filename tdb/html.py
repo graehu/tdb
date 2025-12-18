@@ -104,7 +104,7 @@ def build_html(entries, server=False):
 def build_html_entries(entries):
     entries_str = ""
     for in_entry in entries:
-        text = in_entry.text if not in_entry.md_text else in_entry.md_text
+        text = in_entry.text if not in_entry.md_text else "".join(in_entry.md_text)
         # note: this is really inefficient :)
         for tag in tdb.tags._config:
             colour = tdb.tags.get_colour(tag)
