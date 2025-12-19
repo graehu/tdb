@@ -33,6 +33,7 @@ body {
 .tag {
     font-style: bold;
     display: inline;
+    cursor: pointer
 }
 
 .input {

@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		    {
 			hideedit = true;
 			break;
-		    }	
+		    }
 		}
 		httpGet(url, function (response) {
 		    response = JSON.parse(response);
@@ -76,6 +76,29 @@ document.addEventListener("DOMContentLoaded", function () {
 			    if (container.children[i].children[0].className == "entry" && allowedit && !hideedit)
 			    {
 				var child = container.children[i].children[0];
+				var tags = child.querySelectorAll(".tag");
+				const tag_func = function (event)
+				{
+				    console.log(input.value.includes(event.target.innerText));
+				    if(input.value.includes(event.target.innerText))
+				    {
+					input.value = input.value.replace(event.target.innerText, "");
+					input.value = input.value.trim();
+				    }
+				    else
+				    {
+					if(input.value.length !== 0 && !input.value.endsWith(" "))
+					    input.value += " ";
+					input.value += event.target.innerText;
+
+				    }
+				    updateRecords();
+				};
+				for(var ii = 0; ii < tags.length; ii++)
+				{
+				    var tag = tags[ii];
+				    tag.onclick = tag_func;				    
+				}
 				var edit = document.createElement("button");
 				var remove = document.createElement("button");
 				edit.style = " border: 0; background: none; box-shadow: none; border-radius: 0px; float: right; filter: grayscale(50%);";
