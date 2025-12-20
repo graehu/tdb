@@ -49,7 +49,7 @@ class Record(object):
     span = (0,0)
     md_text = []
     score = 0.0
-    def __init__(self, text, time, date, tags, span):
+    def __init__(self, text, time, date, tags, span, score):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -59,7 +59,7 @@ class Record(object):
         self.span = span
         self.time = time
         self.text_hash = hash(text)
-        self.score = 0.0
+        self.score = score
         # self.md_text = text
 
     def _end(text):
@@ -459,7 +459,8 @@ def split_records(text: str):
             "time": nano,
             "text": "",
             "tags": [],
-            "span": match.span()
+            "span": match.span(),
+            "score": 0.0
         }
         if last and last["time"] > current["time"]: _needs_sort = True
 
