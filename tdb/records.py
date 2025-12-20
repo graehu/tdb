@@ -49,7 +49,8 @@ class Record(object):
     span = (0,0)
     md_text = []
     score = 0.0
-    def __init__(self, text, time, date, tags, span, score):
+    keywords = []
+    def __init__(self, text, time, date, tags, span, score, keywords):
         self.text = text
         if isinstance(date, str):
             self.date = datetime.fromisoformat(date)
@@ -60,6 +61,7 @@ class Record(object):
         self.time = time
         self.text_hash = hash(text)
         self.score = score
+        self.keywords = keywords
         # self.md_text = text
 
     def _end(text):
@@ -89,7 +91,7 @@ class Record(object):
     def asdict(self):
         return {'text': self.text, 'time': self.time,
                 'date': self.date.isoformat(" "), 'tags': self.tags,
-                'span': self.span, 'score': self.score }
+                'span': self.span, 'score': self.score, "keywords": self.keywords }
 
 
 def register_cmd(func):
@@ -253,8 +255,7 @@ def stringify_db_records(options:dict=None, ansi_colours=False):
 
 def stringify_records(records:list, options:dict=None, ansi_colours=False):
     out = ""
-    if options and options["rake"]:
-        records = find_similar(options["rake"], records)
+    # noet: this is a hack and needs to move into db filtering.
     if options and options["as"] == "json":
         res = [r.asdict() for r in records]
         out = json.dumps(res, indent=2)
@@ -333,6 +334,7 @@ def filter_records(records : list, options : list):
     acontains = options["acontains"] if options else []
     ocontains = options["ocontains"] if options else []
     ncontains = options["ncontains"] if options else []
+    rake = options["rake"] if options else []
     md = options["md"].lower() if options else ""
     re_md = re.compile("(#{1,6}\s+.+)")
 
@@ -401,7 +403,10 @@ def filter_records(records : list, options : list):
             record.md_text = md_text
             if not record.md_text: skip = True
         if not skip: out.append(record)
-
+    
+    if rake:
+        out = find_similar(rake, out)
+        
     return out
 
 
@@ -447,6 +452,9 @@ def split_records(text: str):
             last["text"] = section
             last["tags"] = tags
             last["span"] = (x ,y)
+            # this is quite slow consider not doing it unless rake
+            last["keywords"] = tdb.rake.Rake().run(section)
+            # last["keywords"] = []
             records.append(last)
 
     for match in re_hex_record.finditer(text):
@@ -460,7 +468,8 @@ def split_records(text: str):
             "text": "",
             "tags": [],
             "span": match.span(),
-            "score": 0.0
+            "score": 0.0,
+            "keywords": []
         }
         if last and last["time"] > current["time"]: _needs_sort = True
 
@@ -480,8 +489,7 @@ def find_similar(text, records):
     text_kw = kw_ext.run(text)
     results = []
     for record in records:
-        record_kw = kw_ext.run(record.text)
-        for k1, v1 in record_kw:
+        for k1, v1 in record.keywords:
             for k2, v2 in text_kw:
                 if tdb.rake.similarity_score(k1, k2) > 0.8:
                     record.score += (v1+v2)*0.5
