@@ -255,7 +255,6 @@ def stringify_db_records(options:dict=None, ansi_colours=False):
 
 def stringify_records(records:list, options:dict=None, ansi_colours=False):
     out = ""
-    # noet: this is a hack and needs to move into db filtering.
     if options and options["as"] == "json":
         res = [r.asdict() for r in records]
         out = json.dumps(res, indent=2)
@@ -487,6 +486,7 @@ def split_records(text: str):
 def find_similar(text, records):
     kw_ext = tdb.rake.Rake()
     text_kw = kw_ext.run(text)
+    for record in records: record.score = 0.0
     results = []
     for record in records:
         for k1, v1 in record.keywords:
