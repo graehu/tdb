@@ -437,6 +437,7 @@ def split_records(text: str):
     last = None
     current = None
     records = []
+    pre_rake = tdb.config.get("pre_rake", False)
 
     def append_record():
         nonlocal records
@@ -451,9 +452,12 @@ def split_records(text: str):
             last["text"] = section
             last["tags"] = tags
             last["span"] = (x ,y)
-            # this is quite slow consider not doing it unless rake
-            last["keywords"] = tdb.rake.Rake().run(section)
-            # last["keywords"] = []
+            # note: split is run on show, add, etc.
+            # ----: it's too slow for large dbs.
+            if pre_rake:
+                last["keywords"] = tdb.rake.Rake().run(section)
+            else:
+                last["keywords"] = []
             records.append(last)
 
     for match in re_hex_record.finditer(text):
@@ -486,9 +490,12 @@ def split_records(text: str):
 def find_similar(text, records):
     kw_ext = tdb.rake.Rake()
     text_kw = kw_ext.run(text)
-    for record in records: record.score = 0.0
+    for record in records:
+        record.score = 0.0
     results = []
     for record in records:
+        if not record.keywords:
+            record.keywords = tdb.rake.Rake().run(record.text)
         for k1, v1 in record.keywords:
             for k2, v2 in text_kw:
                 if tdb.rake.similarity_score(k1, k2) > 0.8:
