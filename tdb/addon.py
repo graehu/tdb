@@ -113,7 +113,8 @@ def code_cmd(text, args):
         codeblock = re.escape(cmd[0])
         cmd = " ".join(cmd[1:]) if len(cmd[1:]) > 0 else tdb.config.get(f"{cmd[0]}_cmd", "echo no command given")
         cmd = cmd.format_map({"code": "tdb_code"})
-        outfile = re.search(re.escape(f"tdb_code")+"[\.A-Za-z]*", cmd).group(0)
+        outfile = re.search(re.escape(f"tdb_code")+"[\.A-Za-z]*", cmd)
+        outfile = outfile.group(0) if outfile else "tdb_temp"
     except Exception as e: return text
     previous = os.path.abspath(os.path.curdir)
     os.chdir(tdb.config.get_tdb_dir())
